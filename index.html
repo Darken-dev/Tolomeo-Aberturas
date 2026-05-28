@@ -1,0 +1,655 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tolomeo Aberturas</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;600;700;800;900&family=Merriweather:ital,wght@0,300;1,300&display=swap" rel="stylesheet">
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+  <style>
+    :root {
+      --blue-900: #0a1f44;
+      --blue-800: #0c2461;
+      --blue-700: #1a3a8a;
+      --blue-500: #2563eb;
+      --blue-100: #e8f0ff;
+      --blue-50:  #f0f5ff;
+      --gold:     #d4a630;
+      --white:    #ffffff;
+      --gray-50:  #f8faff;
+      --gray-100: #edf1f9;
+      --gray-300: #b0bcd4;
+      --gray-500: #6b7a9c;
+      --gray-700: #2d3a58;
+      --shadow-sm: 0 2px 10px rgba(10,31,68,0.08);
+      --shadow:    0 6px 28px rgba(10,31,68,0.13);
+      --shadow-lg: 0 12px 48px rgba(10,31,68,0.2);
+      --radius:    12px;
+      --tr:        all 0.28s cubic-bezier(.4,0,.2,1);
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Montserrat', sans-serif;
+      background: var(--gray-50);
+      color: var(--gray-700);
+      min-height: 100vh;
+    }
+
+    /* ── HEADER ─────────────────────────────────── */
+    header {
+      background: linear-gradient(135deg, var(--blue-900) 0%, var(--blue-800) 50%, var(--blue-700) 100%);
+      position: relative;
+      overflow: hidden;
+    }
+    header::before {
+      content: '';
+      position: absolute; top: -80px; right: -80px;
+      width: 360px; height: 360px;
+      background: radial-gradient(circle, rgba(255,255,255,0.06) 0%, transparent 70%);
+      border-radius: 50%;
+    }
+    header::after {
+      content: '';
+      position: absolute; bottom: -120px; left: -40px;
+      width: 300px; height: 300px;
+      background: radial-gradient(circle, rgba(37,99,235,0.3) 0%, transparent 70%);
+      border-radius: 50%;
+    }
+    .header-top {
+      max-width: 1240px; margin: 0 auto;
+      padding: 30px 32px 22px;
+      display: flex; align-items: center; justify-content: space-between;
+      position: relative; z-index: 2;
+      gap: 20px; flex-wrap: wrap;
+    }
+    .brand { display: flex; align-items: center; gap: 18px; }
+    .brand-icon {
+      width: 56px; height: 56px;
+      background: rgba(255,255,255,0.12);
+      border: 1px solid rgba(255,255,255,0.22);
+      border-radius: 14px;
+      display: flex; align-items: center; justify-content: center;
+      backdrop-filter: blur(4px);
+    }
+    .brand-icon svg { width: 28px; height: 28px; fill: #93c5fd; }
+    .brand-text h1 {
+      font-size: 1.9rem; font-weight: 900;
+      color: #fff;
+      letter-spacing: 0.06em; text-transform: uppercase;
+      line-height: 1; text-shadow: 0 2px 12px rgba(0,0,0,0.3);
+    }
+    .brand-text p {
+      font-size: 0.7rem; font-weight: 600;
+      color: rgba(255,255,255,0.55);
+      letter-spacing: 0.35em; text-transform: uppercase;
+      margin-top: 5px;
+    }
+    .header-actions { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+    .btn-contact {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 10px 22px; border-radius: 50px;
+      font-family: 'Montserrat', sans-serif;
+      font-weight: 700; font-size: 0.8rem; letter-spacing: 0.04em;
+      text-decoration: none; transition: var(--tr);
+      white-space: nowrap;
+    }
+    .btn-contact svg { width: 17px; height: 17px; fill: currentColor; flex-shrink: 0; }
+    .btn-wa  { background: #22c55e; color: #fff; }
+    .btn-wa:hover  { background: #16a34a; transform: translateY(-2px); box-shadow: 0 8px 24px rgba(34,197,94,0.45); }
+    .btn-ig  { background: linear-gradient(45deg,#f59e0b,#ef4444,#a855f7); color: #fff; }
+    .btn-ig:hover  { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(168,85,247,0.45); }
+
+    .header-bar {
+      background: rgba(0,0,0,0.18);
+      border-top: 1px solid rgba(255,255,255,0.08);
+      position: relative; z-index: 2;
+    }
+    .header-bar-inner {
+      max-width: 1240px; margin: 0 auto; padding: 10px 32px;
+      display: flex; align-items: center; gap: 6px;
+    }
+    .bar-tag {
+      font-size: 0.68rem; font-weight: 700; letter-spacing: 0.18em;
+      text-transform: uppercase; color: rgba(255,255,255,0.45);
+      padding: 4px 12px; border-radius: 20px;
+      border: 1px solid rgba(255,255,255,0.12);
+    }
+    .bar-tag.active {
+      background: rgba(255,255,255,0.12);
+      color: rgba(255,255,255,0.85);
+    }
+
+    /* ── LAYOUT ─────────────────────────────────── */
+    .layout {
+      max-width: 1240px; margin: 0 auto;
+      padding: 32px 24px;
+      display: grid; grid-template-columns: 270px 1fr;
+      gap: 28px; align-items: start;
+    }
+
+    /* ── SIDEBAR ─────────────────────────────────── */
+    .sidebar {
+      position: sticky; top: 24px;
+      background: #fff;
+      border-radius: var(--radius);
+      box-shadow: var(--shadow-sm);
+      overflow: hidden;
+    }
+    .sidebar-header {
+      background: linear-gradient(90deg, var(--blue-800), var(--blue-700));
+      padding: 16px 20px;
+      display: flex; align-items: center; gap: 10px;
+    }
+    .sidebar-header svg { width: 16px; height: 16px; fill: rgba(255,255,255,0.7); }
+    .sidebar-header span {
+      font-size: 0.68rem; font-weight: 800;
+      letter-spacing: 0.22em; text-transform: uppercase;
+      color: rgba(255,255,255,0.75);
+    }
+    .sidebar-body { padding: 8px 0 12px; }
+
+    /* Accordion level-1 */
+    .acc1 { list-style: none; }
+    .acc1 > li { border-bottom: 1px solid var(--gray-100); }
+    .acc1 > li:last-child { border-bottom: none; }
+
+    .acc-btn {
+      width: 100%; background: none; border: none; cursor: pointer;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 12px 20px;
+      font-family: 'Montserrat', sans-serif;
+      font-weight: 700; font-size: 0.82rem;
+      color: var(--blue-800);
+      text-align: left; letter-spacing: 0.01em;
+      transition: var(--tr);
+    }
+    .acc-btn:hover { background: var(--blue-50); color: var(--blue-500); }
+    .acc-btn.open  { background: var(--blue-50); color: var(--blue-700); }
+    .acc-btn .chevron {
+      width: 14px; height: 14px; fill: currentColor;
+      transition: transform 0.3s ease; flex-shrink: 0;
+    }
+    .acc-btn.open .chevron { transform: rotate(90deg); }
+
+    .acc-body {
+      overflow: hidden; max-height: 0;
+      transition: max-height 0.35s cubic-bezier(.4,0,.2,1);
+    }
+    .acc-body.open { max-height: 600px; }
+
+    /* Level-2 */
+    .acc2 { list-style: none; padding: 4px 0; }
+
+    .acc2-btn {
+      width: 100%; background: none; border: none; cursor: pointer;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 9px 20px 9px 34px;
+      font-family: 'Montserrat', sans-serif;
+      font-weight: 600; font-size: 0.78rem;
+      color: var(--gray-500); text-align: left;
+      transition: var(--tr);
+    }
+    .acc2-btn:hover { color: var(--blue-700); background: var(--blue-50); }
+    .acc2-btn.open  { color: var(--blue-700); }
+    .acc2-btn .chevron { width: 12px; height: 12px; fill: currentColor; transition: transform 0.3s; flex-shrink: 0; }
+    .acc2-btn.open .chevron { transform: rotate(90deg); }
+
+    .acc2-body { overflow: hidden; max-height: 0; transition: max-height 0.3s ease; }
+    .acc2-body.open { max-height: 200px; }
+
+    /* Level-3 leaves */
+    .acc3 { list-style: none; padding: 4px 0 6px; }
+    .leaf {
+      padding: 8px 20px 8px 50px;
+      font-size: 0.76rem; font-weight: 500;
+      color: var(--gray-500); cursor: pointer;
+      transition: var(--tr);
+      display: flex; align-items: center; gap: 8px;
+    }
+    .leaf::before {
+      content: ''; width: 4px; height: 4px; border-radius: 50%;
+      background: var(--gray-300); flex-shrink: 0; transition: var(--tr);
+    }
+    .leaf:hover { color: var(--blue-700); background: var(--blue-50); }
+    .leaf:hover::before { background: var(--blue-500); }
+    .leaf.sel { color: var(--blue-700); background: var(--blue-100); font-weight: 700; }
+    .leaf.sel::before { background: var(--blue-700); }
+
+    /* Direct leaf (no children) */
+    .acc-btn.leaf-dir {
+      color: var(--gray-500); font-weight: 600; font-size: 0.82rem;
+    }
+    .acc-btn.leaf-dir:hover { color: var(--blue-700); }
+    .acc-btn.leaf-dir.sel { background: var(--blue-100); color: var(--blue-700); font-weight: 700; }
+
+    /* ── PRODUCTS AREA ───────────────────────────── */
+    main { min-height: 400px; }
+
+    .prod-header {
+      display: flex; align-items: flex-end; justify-content: space-between;
+      margin-bottom: 24px; padding-bottom: 16px;
+      border-bottom: 2px solid var(--gray-100);
+    }
+    .prod-header h2 {
+      font-size: 1.3rem; font-weight: 800;
+      color: var(--blue-800); letter-spacing: 0.02em;
+    }
+    .prod-count {
+      font-size: 0.75rem; font-weight: 600;
+      color: var(--gray-300); letter-spacing: 0.06em;
+    }
+
+    .prod-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+      gap: 20px;
+    }
+
+    .prod-card {
+      background: #fff; border-radius: var(--radius);
+      box-shadow: var(--shadow-sm); overflow: hidden;
+      transition: var(--tr); cursor: default;
+    }
+    .prod-card:hover { transform: translateY(-5px); box-shadow: var(--shadow); }
+    .prod-card img {
+      width: 100%; height: 185px; object-fit: cover; display: block;
+    }
+    .prod-card-placeholder {
+      width: 100%; height: 185px;
+      background: linear-gradient(135deg, var(--blue-50), var(--gray-100));
+      display: flex; align-items: center; justify-content: center;
+    }
+    .prod-card-placeholder svg { width: 44px; height: 44px; fill: var(--gray-300); }
+    .prod-info { padding: 16px 18px 18px; }
+    .prod-title {
+      font-size: 0.9rem; font-weight: 700;
+      color: var(--blue-800); margin-bottom: 7px; line-height: 1.35;
+    }
+    .prod-caption {
+      font-size: 0.76rem; color: var(--gray-500);
+      line-height: 1.55; margin-bottom: 12px;
+      font-family: 'Merriweather', serif; font-style: italic; font-weight: 300;
+    }
+    .prod-price {
+      font-size: 1.05rem; font-weight: 900;
+      color: var(--blue-700); letter-spacing: 0.02em;
+      display: inline-block;
+      background: var(--blue-50); padding: 4px 12px; border-radius: 6px;
+    }
+
+    /* States */
+    .state-welcome {
+      display: flex; flex-direction: column; align-items: center;
+      justify-content: center; text-align: center; padding: 80px 20px;
+    }
+    .state-icon {
+      width: 90px; height: 90px; border-radius: 50%;
+      background: linear-gradient(135deg, var(--blue-50), var(--blue-100));
+      display: flex; align-items: center; justify-content: center;
+      margin-bottom: 24px;
+    }
+    .state-icon svg { width: 42px; height: 42px; fill: var(--blue-700); }
+    .state-welcome h2 {
+      font-size: 1.5rem; font-weight: 800; color: var(--blue-800);
+      margin-bottom: 12px;
+    }
+    .state-welcome p {
+      font-size: 0.88rem; color: var(--gray-500); max-width: 380px;
+      line-height: 1.65; margin: 0 auto;
+    }
+
+    .state-empty { text-align: center; padding: 60px 20px; color: var(--gray-300); }
+    .state-empty svg { width: 56px; height: 56px; fill: var(--gray-100); margin-bottom: 14px; }
+    .state-empty p { font-size: 0.85rem; font-weight: 600; }
+
+    .loading {
+      display: flex; align-items: center; justify-content: center;
+      gap: 12px; padding: 60px; color: var(--gray-300); font-size: 0.85rem; font-weight: 600;
+    }
+    .spinner {
+      width: 22px; height: 22px; border-radius: 50%;
+      border: 2.5px solid var(--gray-100); border-top-color: var(--blue-500);
+      animation: spin 0.75s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── FOOTER ─────────────────────────────────── */
+    footer {
+      margin-top: 70px;
+      background: var(--blue-900);
+      color: rgba(255,255,255,0.45);
+      text-align: center; padding: 28px 24px;
+      font-size: 0.78rem; font-weight: 500; letter-spacing: 0.04em;
+    }
+    footer a { color: rgba(255,255,255,0.6); text-decoration: none; }
+    footer a:hover { color: rgba(255,255,255,0.9); }
+
+    /* Floating admin link (hidden, subtle) */
+    .admin-fab {
+      position: fixed; bottom: 22px; right: 22px;
+      width: 38px; height: 38px; border-radius: 50%;
+      background: var(--blue-900); color: #fff;
+      display: flex; align-items: center; justify-content: center;
+      text-decoration: none; opacity: 0.15; transition: opacity 0.3s;
+      z-index: 200;
+    }
+    .admin-fab:hover { opacity: 0.8; }
+    .admin-fab svg { width: 17px; height: 17px; fill: #fff; }
+
+    /* ── RESPONSIVE ─────────────────────────────── */
+    @media (max-width: 800px) {
+      .layout { grid-template-columns: 1fr; }
+      .sidebar { position: static; }
+      .header-top { flex-direction: column; text-align: center; align-items: center; }
+      .brand-text h1 { font-size: 1.5rem; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ═══ HEADER ═══════════════════════════════════════════ -->
+<header>
+  <div class="header-top">
+    <div class="brand">
+      <div class="brand-icon">
+        <svg viewBox="0 0 24 24"><path d="M3 13h1v7c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2v-7h1c.55 0 1-.45 1-1s-.45-1-1-1L12 2 2 12c-.55 0-1 .45-1 1s.45 1 1 1zm9-8.31L19 11v9H5v-9l7-6.31zM10 13h4v6h-4z"/></svg>
+      </div>
+      <div class="brand-text">
+        <h1>Tolomeo Aberturas</h1>
+        <p>Aluminio &middot; Madera &middot; Chapa</p>
+      </div>
+    </div>
+    <div class="header-actions">
+      <a href="https://wa.me/54XXXXXXXXXX?text=Hola!%20Quiero%20consultar%20sobre%20sus%20aberturas" 
+         target="_blank" class="btn-contact btn-wa">
+        <svg viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413Z"/></svg>
+        WhatsApp
+      </a>
+      <a href="https://instagram.com/tolomeoaberturas" 
+         target="_blank" class="btn-contact btn-ig">
+        <svg viewBox="0 0 24 24"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg>
+        Instagram
+      </a>
+    </div>
+  </div>
+  <div class="header-bar">
+    <div class="header-bar-inner">
+      <span class="bar-tag active">Catálogo</span>
+      <span class="bar-tag">Aluminio</span>
+      <span class="bar-tag">Madera</span>
+      <span class="bar-tag">Chapa</span>
+    </div>
+  </div>
+</header>
+
+<!-- ═══ LAYOUT ═══════════════════════════════════════════ -->
+<div class="layout">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sidebar-header">
+      <svg viewBox="0 0 24 24"><path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"/></svg>
+      <span>Categorías</span>
+    </div>
+    <div class="sidebar-body">
+      <ul class="acc1" id="menu">
+
+        <!-- ALUMINIO -->
+        <li>
+          <button class="acc-btn" id="btn-alu" onclick="toggleL1(this)">
+            <span>Aberturas de Aluminio</span>
+            <svg class="chevron" viewBox="0 0 24 24"><path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6z"/></svg>
+          </button>
+          <div class="acc-body" id="body-alu">
+            <ul class="acc2">
+              <!-- Herrero -->
+              <li>
+                <button class="acc2-btn" onclick="toggleL2(this)">
+                  <span>Línea Herrero</span>
+                  <svg class="chevron" viewBox="0 0 24 24"><path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6z"/></svg>
+                </button>
+                <div class="acc2-body">
+                  <ul class="acc3">
+                    <li class="leaf" onclick="selectCat(this,'aluminio_herrero_puertas','Línea Herrero — Puertas')">Puertas</li>
+                    <li class="leaf" onclick="selectCat(this,'aluminio_herrero_ventanas','Línea Herrero — Ventanas')">Ventanas</li>
+                    <li class="leaf" onclick="selectCat(this,'aluminio_herrero_portones','Línea Herrero — Portones')">Portones</li>
+                  </ul>
+                </div>
+              </li>
+              <!-- Modena -->
+              <li>
+                <button class="acc2-btn" onclick="toggleL2(this)">
+                  <span>Línea Modena</span>
+                  <svg class="chevron" viewBox="0 0 24 24"><path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6z"/></svg>
+                </button>
+                <div class="acc2-body">
+                  <ul class="acc3">
+                    <li class="leaf" onclick="selectCat(this,'aluminio_modena_puertas','Línea Modena — Puertas')">Puertas</li>
+                    <li class="leaf" onclick="selectCat(this,'aluminio_modena_ventanas','Línea Modena — Ventanas')">Ventanas</li>
+                    <li class="leaf" onclick="selectCat(this,'aluminio_modena_portones','Línea Modena — Portones')">Portones</li>
+                  </ul>
+                </div>
+              </li>
+              <!-- A30 -->
+              <li>
+                <button class="acc-btn leaf-dir" style="padding-left:34px;font-size:0.78rem;"
+                  onclick="selectCatBtn(this,'aluminio_a30','Aluminio A30')">
+                  A30
+                </button>
+              </li>
+              <!-- RPT -->
+              <li>
+                <button class="acc-btn leaf-dir" style="padding-left:34px;font-size:0.78rem;"
+                  onclick="selectCatBtn(this,'aluminio_rpt','Aluminio RPT')">
+                  RPT
+                </button>
+              </li>
+            </ul>
+          </div>
+        </li>
+
+        <!-- MADERA -->
+        <li>
+          <button class="acc-btn" onclick="toggleL1(this)">
+            <span>Aberturas de Madera</span>
+            <svg class="chevron" viewBox="0 0 24 24"><path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6z"/></svg>
+          </button>
+          <div class="acc-body">
+            <ul class="acc3" style="padding: 8px 0 8px 20px;">
+              <li class="leaf" onclick="selectCat(this,'madera_puertas_exterior','Madera — Puertas Exterior')">Puertas Exterior</li>
+              <li class="leaf" onclick="selectCat(this,'madera_portones_exterior','Madera — Portones Exterior')">Portones Exterior</li>
+              <li class="leaf" onclick="selectCat(this,'madera_puertas_interior','Madera — Puertas Interior')">Puertas Interior</li>
+            </ul>
+          </div>
+        </li>
+
+        <!-- CHAPA -->
+        <li>
+          <button class="acc-btn leaf-dir" onclick="selectCatBtn(this,'chapa','Aberturas de Chapa')">
+            <span>Aberturas de Chapa</span>
+          </button>
+        </li>
+
+      </ul>
+    </div>
+  </aside>
+
+  <!-- MAIN PRODUCT AREA -->
+  <main id="main">
+    <div class="state-welcome">
+      <div class="state-icon">
+        <svg viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
+      </div>
+      <h2>Bienvenido a Tolomeo Aberturas</h2>
+      <p>Seleccioná una categoría del menú lateral para explorar nuestro catálogo de aberturas de aluminio, madera y chapa.</p>
+    </div>
+  </main>
+
+</div>
+
+<!-- FOOTER -->
+<footer>
+  <p>© 2025 Tolomeo Aberturas &nbsp;|&nbsp; Miramar, Buenos Aires &nbsp;|&nbsp; 
+    <a href="https://wa.me/54XXXXXXXXXX" target="_blank">WhatsApp</a> &nbsp;|&nbsp;
+    <a href="https://instagram.com/tolomeoaberturas" target="_blank">Instagram</a>
+  </p>
+</footer>
+
+<a href="Admin.html" class="admin-fab" title="Administración">
+  <svg viewBox="0 0 24 24"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4z"/></svg>
+</a>
+
+<!-- ═══ SCRIPTS ════════════════════════════════════════════ -->
+<script>
+// ╔══════════════════════════════════════════════════════════╗
+// ║  CONFIGURACIÓN FIREBASE — se puede guardar desde Admin   ║
+// ║  Obtené estos valores desde: console.firebase.google.com ║
+// ╚══════════════════════════════════════════════════════════╝
+let FIREBASE_CONFIG = null;
+try {
+  const saved = localStorage.getItem('tolomeo_fb_config');
+  if (saved) FIREBASE_CONFIG = JSON.parse(saved);
+} catch (e) { console.warn('No se pudo leer configuración guardada:', e.message); }
+
+// ╔══════════════════════════════════════════════════════════╗
+// ║  CONTACTO — ACTUALIZAR CON DATOS REALES                 ║
+// ╚══════════════════════════════════════════════════════════╝
+// WhatsApp: reemplazá XXXXXXXXXX con tu número (sin 0 ni 15)
+// Instagram: reemplazá tolomeoaberturas con tu usuario
+
+let db = null;
+let selLeaf = null;
+
+try {
+  if (FIREBASE_CONFIG && !firebase.apps.length) firebase.initializeApp(FIREBASE_CONFIG);
+  if (firebase.apps.length) db = firebase.firestore();
+} catch(e) {
+  console.warn('Firebase no configurado o error de inicialización:', e.message);
+}
+
+/* — Accordion Level 1 — */
+function toggleL1(btn) {
+  const body = btn.nextElementSibling;
+  const isOpen = body.classList.contains('open');
+  // Cerrar todos
+  document.querySelectorAll('.acc-btn:not(.leaf-dir)').forEach(b => {
+    b.classList.remove('open');
+    const c = b.nextElementSibling;
+    if (c && c.classList.contains('acc-body')) c.classList.remove('open');
+  });
+  if (!isOpen) { btn.classList.add('open'); body.classList.add('open'); }
+}
+
+/* — Accordion Level 2 — */
+function toggleL2(btn) {
+  const body = btn.nextElementSibling;
+  const isOpen = body.classList.contains('open');
+  const parent = btn.closest('.acc2');
+  parent.querySelectorAll('.acc2-btn').forEach(b => {
+    b.classList.remove('open');
+    const c = b.nextElementSibling;
+    if (c) c.classList.remove('open');
+  });
+  if (!isOpen) { btn.classList.add('open'); body.classList.add('open'); }
+}
+
+/* — Select leaf category — */
+function selectCat(el, catId, catName) {
+  document.querySelectorAll('.leaf').forEach(l => l.classList.remove('sel'));
+  document.querySelectorAll('.acc-btn.leaf-dir').forEach(b => b.classList.remove('sel'));
+  el.classList.add('sel');
+  loadProducts(catId, catName);
+}
+
+function selectCatBtn(btn, catId, catName) {
+  document.querySelectorAll('.leaf').forEach(l => l.classList.remove('sel'));
+  document.querySelectorAll('.acc-btn.leaf-dir').forEach(b => b.classList.remove('sel'));
+  btn.classList.add('sel');
+  loadProducts(catId, catName);
+}
+
+/* — Load products from Firebase — */
+async function loadProducts(catId, catName) {
+  const main = document.getElementById('main');
+  main.innerHTML = `
+    <div class="prod-header">
+      <h2>${catName}</h2>
+      <span class="prod-count">Cargando...</span>
+    </div>
+    <div class="loading"><div class="spinner"></div> Cargando productos...</div>
+  `;
+
+  if (!db) {
+    main.innerHTML = `
+      <div class="prod-header"><h2>${catName}</h2><span class="prod-count">—</span></div>
+      <div class="state-empty">
+        <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>
+        <p>Firebase no configurado. Conectá desde <a href="Admin.html">Panel Admin</a> o guardá la configuración en localStorage.</p>
+      </div>`;
+    return;
+  }
+
+  try {
+    const snap = await db.collection('products')
+      .where('category', '==', catId)
+      .orderBy('createdAt', 'desc')
+      .get();
+
+    const products = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    renderProducts(catName, products);
+  } catch(e) {
+    console.error(e);
+    main.innerHTML = `
+      <div class="prod-header"><h2>${catName}</h2></div>
+      <div class="state-empty">
+        <p>Error al cargar. Verificá la configuración de Firebase y los índices de Firestore.</p>
+      </div>`;
+  }
+}
+
+function renderProducts(catName, products) {
+  const main = document.getElementById('main');
+  const imgPlaceholder = `<div class="prod-card-placeholder"><svg viewBox="0 0 24 24" fill="currentColor" style="color:#b0bcd4"><path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"/></svg></div>`;
+
+  let html = `
+    <div class="prod-header">
+      <h2>${catName}</h2>
+      <span class="prod-count">${products.length} producto${products.length !== 1 ? 's' : ''}</span>
+    </div>`;
+
+  if (products.length === 0) {
+    html += `<div class="state-empty">
+      <svg viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-1 16H6a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1h12a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1z"/></svg>
+      <p>No hay productos en esta categoría todavía.</p>
+    </div>`;
+  } else {
+    html += '<div class="prod-grid">';
+    products.forEach(p => {
+      html += `<div class="prod-card">
+        ${p.imageBase64
+          ? `<img src="${p.imageBase64}" alt="${escHtml(p.title || '')}" loading="lazy">`
+          : imgPlaceholder}
+        <div class="prod-info">
+          <div class="prod-title">${escHtml(p.title || 'Sin título')}</div>
+          ${p.caption ? `<div class="prod-caption">${escHtml(p.caption)}</div>` : ''}
+          ${p.price    ? `<div class="prod-price">${escHtml(p.price)}</div>` : ''}
+        </div>
+      </div>`;
+    });
+    html += '</div>';
+  }
+
+  main.innerHTML = html;
+}
+
+function escHtml(s) {
+  return String(s)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+</script>
+</body>
+</html>
