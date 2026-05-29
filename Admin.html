@@ -1141,9 +1141,10 @@ function closeDeleteModal() {
 
 async function confirmDelete() {
   if (!pendingDeleteId || !db) return;
-  closeDeleteModal();
+  const idToDelete = pendingDeleteId; // guardar ANTES de cerrar el modal
+  closeDeleteModal();                 // closeDeleteModal pone pendingDeleteId = null
   try {
-    await db.collection('products').doc(pendingDeleteId).delete();
+    await db.collection('products').doc(idToDelete).delete();
     showToast('Producto eliminado', 'success');
     loadProducts(currentCatId, currentCatName);
   } catch(e) {
