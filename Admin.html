@@ -787,12 +787,21 @@ const ADMIN_USER = 'Mariano';
 const ADMIN_PASS = '1943';
 
 // ══════════════════════════════════════════════════════════
-//  FIREBASE CONFIG (stored in localStorage)
+//  FIREBASE CONFIG (hardcoded)
 // ══════════════════════════════════════════════════════════
+const FIREBASE_CONFIG = {
+  apiKey: "AIzaSyB_3dI3r7xtNw__MXX20mnCAksZnpQCD9U",
+  authDomain: "tolomeopuertasyventnas.firebaseapp.com",
+  databaseURL: "https://tolomeopuertasyventnas-default-rtdb.firebaseio.com",
+  projectId: "tolomeopuertasyventnas",
+  storageBucket: "tolomeopuertasyventnas.firebasestorage.app",
+  messagingSenderId: "12516780742",
+  appId: "1:12516780742:web:d02cf94fbde8c9498545c7",
+  measurementId: "G-V3DTZWJCN6"
+};
+
 function loadSavedConfig() {
-  const saved = localStorage.getItem('tolomeo_fb_config');
-  if (!saved) return null;
-  try { return JSON.parse(saved); } catch(e) { return null; }
+  return FIREBASE_CONFIG;
 }
 
 function populateConfigForm(cfg) {

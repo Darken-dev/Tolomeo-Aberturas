@@ -508,11 +508,16 @@
 // ║  CONFIGURACIÓN FIREBASE — se puede guardar desde Admin   ║
 // ║  Obtené estos valores desde: console.firebase.google.com ║
 // ╚══════════════════════════════════════════════════════════╝
-let FIREBASE_CONFIG = null;
-try {
-  const saved = localStorage.getItem('tolomeo_fb_config');
-  if (saved) FIREBASE_CONFIG = JSON.parse(saved);
-} catch (e) { console.warn('No se pudo leer configuración guardada:', e.message); }
+const FIREBASE_CONFIG = {
+  apiKey: "AIzaSyB_3dI3r7xtNw__MXX20mnCAksZnpQCD9U",
+  authDomain: "tolomeopuertasyventnas.firebaseapp.com",
+  databaseURL: "https://tolomeopuertasyventnas-default-rtdb.firebaseio.com",
+  projectId: "tolomeopuertasyventnas",
+  storageBucket: "tolomeopuertasyventnas.firebasestorage.app",
+  messagingSenderId: "12516780742",
+  appId: "1:12516780742:web:d02cf94fbde8c9498545c7",
+  measurementId: "G-V3DTZWJCN6"
+};
 
 // ╔══════════════════════════════════════════════════════════╗
 // ║  CONTACTO — ACTUALIZAR CON DATOS REALES                 ║
@@ -524,10 +529,10 @@ let db = null;
 let selLeaf = null;
 
 try {
-  if (FIREBASE_CONFIG && !firebase.apps.length) firebase.initializeApp(FIREBASE_CONFIG);
-  if (firebase.apps.length) db = firebase.firestore();
+  if (!firebase.apps.length) firebase.initializeApp(FIREBASE_CONFIG);
+  db = firebase.firestore();
 } catch(e) {
-  console.warn('Firebase no configurado o error de inicialización:', e.message);
+  console.warn('Firebase error:', e.message);
 }
 
 /* — Accordion Level 1 — */
