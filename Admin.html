@@ -1168,18 +1168,45 @@ function handleDrop(e) {
 }
 
 function processImageFile(file) {
-  if (file.size > 4 * 1024 * 1024) {
-    showToast('La imagen es muy grande (máx. 4 MB)', 'error'); return;
+  if (!file.type.startsWith('image/')) {
+    showToast('El archivo no es una imagen válida', 'error'); return;
   }
   const reader = new FileReader();
   reader.onload = e => {
-    imageBase64 = e.target.result;
-    const preview = document.getElementById('img-preview');
-    preview.src = imageBase64;
-    preview.style.display = 'block';
-    document.getElementById('img-remove-btn').style.display = 'inline-block';
-    // Hide the upload hint text
-    document.querySelectorAll('#upload-zone > svg, #upload-zone > p, #upload-zone > small').forEach(el => el.style.display = 'none');
+    const img = new Image();
+    img.onload = () => {
+      // Comprimir manteniendo la mayor calidad posible dentro de ~1 MB base64
+      const MAX_SIDE = 1600; // px máximo por lado
+      let w = img.width, h = img.height;
+      if (w > MAX_SIDE || h > MAX_SIDE) {
+        const ratio = Math.min(MAX_SIDE / w, MAX_SIDE / h);
+        w = Math.round(w * ratio);
+        h = Math.round(h * ratio);
+      }
+      const canvas = document.createElement('canvas');
+      canvas.width = w; canvas.height = h;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0, w, h);
+
+      // Intentar con calidad alta; reducir solo si supera ~900 KB base64 (~675 KB binario)
+      let quality = 0.88;
+      let result = canvas.toDataURL('image/jpeg', quality);
+      while (result.length > 920000 && quality > 0.4) {
+        quality -= 0.08;
+        result = canvas.toDataURL('image/jpeg', quality);
+      }
+
+      imageBase64 = result;
+      const preview = document.getElementById('img-preview');
+      preview.src = imageBase64;
+      preview.style.display = 'block';
+      document.getElementById('img-remove-btn').style.display = 'inline-block';
+      document.querySelectorAll('#upload-zone > svg, #upload-zone > p, #upload-zone > small').forEach(el => el.style.display = 'none');
+
+      const kb = Math.round(result.length * 0.75 / 1024);
+      showToast(`Imagen lista (≈${kb} KB)`, 'success');
+    };
+    img.src = e.target.result;
   };
   reader.readAsDataURL(file);
 }
