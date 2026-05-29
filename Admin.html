@@ -994,30 +994,57 @@ function renderAdminView(catName, products) {
 }
 
 function renderProductsHtml(products) {
+  const grid = document.createElement('div');
+  grid.className = 'prod-grid';
+
   if (products.length === 0) {
-    return `<div class="state-empty">
+    grid.innerHTML = `<div class="state-empty">
       <svg viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-1 16H6a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1h12a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1z"/></svg>
       <p>No hay productos en esta categoría todavía.</p>
     </div>`;
+    return grid.outerHTML;
   }
-  let html = '<div class="prod-grid">';
+
   products.forEach(p => {
-    html += `<div class="prod-card" data-id="${p.id}">
-      ${p.imageBase64
-        ? `<img src="${p.imageBase64}" alt="${escHtml(p.title||'')}" loading="lazy">`
-        : `<div class="prod-card-placeholder"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"/></svg></div>`}
-      <button class="prod-delete" onclick="askDelete(this.closest('.prod-card').dataset.id)" title="Eliminar producto">
-        <svg viewBox="0 0 24 24"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>
-      </button>
-      <div class="prod-info">
-        <div class="prod-title">${escHtml(p.title || 'Sin título')}</div>
-        ${p.caption ? `<div class="prod-caption">${escHtml(p.caption)}</div>` : ''}
-        ${p.price    ? `<div class="prod-price">${escHtml(p.price)}</div>` : ''}
-      </div>
-    </div>`;
+    const card = document.createElement('div');
+    card.className = 'prod-card';
+    card.dataset.id = p.id; // safe: no innerHTML, no string interpolation
+
+    // Imagen: asignada por propiedad JS, nunca por innerHTML
+    if (p.imageBase64) {
+      const img = document.createElement('img');
+      img.src = p.imageBase64;   // propiedad JS: las comillas en base64 no rompen nada
+      img.alt = p.title || '';
+      img.loading = 'lazy';
+      card.appendChild(img);
+    } else {
+      const ph = document.createElement('div');
+      ph.className = 'prod-card-placeholder';
+      ph.innerHTML = `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"/></svg>`;
+      card.appendChild(ph);
+    }
+
+    // Botón eliminar: listener JS directo, id nunca pasa por HTML
+    const btn = document.createElement('button');
+    btn.className = 'prod-delete';
+    btn.title = 'Eliminar producto';
+    btn.innerHTML = `<svg viewBox="0 0 24 24"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>`;
+    btn.addEventListener('click', () => askDelete(p.id));
+    card.appendChild(btn);
+
+    // Info textual: escapeada correctamente
+    const info = document.createElement('div');
+    info.className = 'prod-info';
+    info.innerHTML = `
+      <div class="prod-title">${escHtml(p.title || 'Sin título')}</div>
+      ${p.caption ? `<div class="prod-caption">${escHtml(p.caption)}</div>` : ''}
+      ${p.price    ? `<div class="prod-price">${escHtml(p.price)}</div>`   : ''}`;
+    card.appendChild(info);
+
+    grid.appendChild(card);
   });
-  html += '</div>';
-  return html;
+
+  return grid.outerHTML; // los listeners se pierden en outerHTML, ver nota abajo
 }
 
 // ══════════════════════════════════════════════════════════
@@ -1039,7 +1066,17 @@ async function loadProducts(catId, catName) {
       .get();
     const products = snap.docs.map(d => ({ id: d.id, ...d.data() }));
     const area = document.getElementById('products-area');
-    if (area) area.innerHTML = renderProductsHtml(products);
+    if (area) {
+      const tmp = document.createElement('div');
+      tmp.innerHTML = renderProductsHtml(products);
+      const newGrid = tmp.firstChild;
+      // Re-attach delete listeners (lost in outerHTML serialization)
+      newGrid.querySelectorAll('.prod-delete').forEach((btn, i) => {
+        btn.addEventListener('click', () => askDelete(products[i].id));
+      });
+      area.innerHTML = '';
+      area.appendChild(newGrid);
+    }
     // Update count
     const header = document.querySelector('.cat-header .cat-count');
     if (header) header.textContent = `${products.length} producto${products.length !== 1 ? 's' : ''}`;
