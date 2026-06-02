@@ -1265,10 +1265,19 @@ function loadPageEditor() {
   renderSiteEditor();
 }
 
-function renderSiteEditor() {
+async function renderSiteEditor() {
   const main = document.getElementById('admin-main');
-  const cfg = JSON.parse(localStorage.getItem('tolomeo_site_config') || 'null') || {};
-  const secs = JSON.parse(localStorage.getItem('tolomeo_site_sections') || '[]');
+  let cfg = {}, secs = [];
+  if (db) {
+    try {
+      const [cfgDoc, secsDoc] = await Promise.all([
+        db.collection('siteConfig').doc('config').get(),
+        db.collection('siteConfig').doc('sections').get(),
+      ]);
+      if (cfgDoc.exists)  cfg  = cfgDoc.data()  || {};
+      if (secsDoc.exists) secs = secsDoc.data()?.items || [];
+    } catch(e) { console.error('Error cargando configuración de la página:', e); }
+  }
   main.innerHTML = `
     <div class="cat-header">
       <h2>Edición de la Página</h2>
@@ -1359,35 +1368,58 @@ function renderSectionsList(secs) {
   return html;
 }
 
-function saveSiteConfig() {
+async function saveSiteConfig() {
+  if (!db) { showToast('Firebase no configurado', 'error'); return; }
   const cfg = {
-    pageTitle: document.getElementById('site-title').value.trim(),
-    brandTitle: document.getElementById('site-brand').value.trim(),
-    bgColor: document.getElementById('site-bg').value,
-    textColor: document.getElementById('site-text').value,
+    pageTitle:    document.getElementById('site-title').value.trim(),
+    brandTitle:   document.getElementById('site-brand').value.trim(),
+    bgColor:      document.getElementById('site-bg').value,
+    textColor:    document.getElementById('site-text').value,
     baseFontSize: parseInt(document.getElementById('site-font-size')?.value || 16, 10),
+    updatedAt:    firebase.firestore.FieldValue.serverTimestamp(),
   };
-  localStorage.setItem('tolomeo_site_config', JSON.stringify(cfg));
-  showToast('Configuración de la página guardada', 'success');
+  try {
+    await db.collection('siteConfig').doc('config').set(cfg);
+    showToast('Configuración de la página guardada ✓', 'success');
+  } catch(e) {
+    console.error(e);
+    showToast('Error al guardar: ' + e.message, 'error');
+  }
 }
 
-function addSection() {
-  const title = document.getElementById('sec-title').value.trim();
+async function addSection() {
+  if (!db) { showToast('Firebase no configurado', 'error'); return; }
+  const title   = document.getElementById('sec-title').value.trim();
   const content = document.getElementById('sec-content').value.trim();
   if (!title || !content) { showToast('Título y contenido son obligatorios', 'error'); return; }
-  const secs = JSON.parse(localStorage.getItem('tolomeo_site_sections') || '[]');
-  secs.push({ title, content });
-  localStorage.setItem('tolomeo_site_sections', JSON.stringify(secs));
-  showToast('Sección agregada', 'success');
-  renderSiteEditor();
+  try {
+    const ref  = db.collection('siteConfig').doc('sections');
+    const snap = await ref.get();
+    const secs = snap.exists ? (snap.data()?.items || []) : [];
+    secs.push({ title, content });
+    await ref.set({ items: secs, updatedAt: firebase.firestore.FieldValue.serverTimestamp() });
+    showToast('Sección agregada ✓', 'success');
+    renderSiteEditor();
+  } catch(e) {
+    console.error(e);
+    showToast('Error al agregar sección: ' + e.message, 'error');
+  }
 }
 
-function deleteSection(index) {
-  const secs = JSON.parse(localStorage.getItem('tolomeo_site_sections') || '[]');
-  secs.splice(index, 1);
-  localStorage.setItem('tolomeo_site_sections', JSON.stringify(secs));
-  showToast('Sección eliminada', 'success');
-  renderSiteEditor();
+async function deleteSection(index) {
+  if (!db) { showToast('Firebase no configurado', 'error'); return; }
+  try {
+    const ref  = db.collection('siteConfig').doc('sections');
+    const snap = await ref.get();
+    const secs = snap.exists ? (snap.data()?.items || []) : [];
+    secs.splice(index, 1);
+    await ref.set({ items: secs, updatedAt: firebase.firestore.FieldValue.serverTimestamp() });
+    showToast('Sección eliminada ✓', 'success');
+    renderSiteEditor();
+  } catch(e) {
+    console.error(e);
+    showToast('Error al eliminar sección: ' + e.message, 'error');
+  }
 }
 
 
