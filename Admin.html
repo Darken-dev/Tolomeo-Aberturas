@@ -788,8 +788,7 @@ let db = null;
 let currentCatId = null;
 let currentCatName = null;
 let pendingDeleteId = null;
-let imageBase64Full = null;
-let imageBase64Thumb = null;
+let imageBase64 = null;
 const ADMIN_USER = 'Mariano';
 const ADMIN_PASS = '1943';
 
@@ -930,7 +929,7 @@ function selectCatBtn(btn, catId, catName) {
 function loadAdminCat(catId, catName) {
   currentCatId = catId;
   currentCatName = catName;
-  imageBase64Full = null; imageBase64Thumb = null;
+  imageBase64 = null;
   renderAdminView(catName, null); // renders with form + loading
   loadProducts(catId, catName);
 }
@@ -1018,9 +1017,9 @@ function renderProductsHtml(products) {
     card.dataset.id = p.id; // safe: no innerHTML, no string interpolation
 
     // Imagen: asignada por propiedad JS, nunca por innerHTML
-    if (p.imageThumbBase64 || p.imageBase64) {
+    if (p.imageBase64) {
       const img = document.createElement('img');
-      img.src = p.imageThumbBase64 || p.imageBase64;   // usar thumb para la grilla
+      img.src = p.imageBase64;   // propiedad JS: las comillas en base64 no rompen nada
       img.alt = p.title || '';
       img.loading = 'lazy';
       card.appendChild(img);
@@ -1111,8 +1110,7 @@ async function saveProduct() {
     title:       title,
     caption:     document.getElementById('f-caption').value.trim(),
     price:       document.getElementById('f-price').value.trim(),
-    imageBase64: imageBase64Full || '',
-    imageThumbBase64: imageBase64Thumb || '',
+    imageBase64: imageBase64 || '',
     createdAt:   firebase.firestore.FieldValue.serverTimestamp(),
   };
 
@@ -1183,53 +1181,35 @@ function processImageFile(file) {
   reader.onload = e => {
     const img = new Image();
     img.onload = () => {
-      // Generar versión completa optimizada
-      const MAX_SIDE_FULL = 1600;
-      let wFull = img.width, hFull = img.height;
-      if (wFull > MAX_SIDE_FULL || hFull > MAX_SIDE_FULL) {
-        const ratio = Math.min(MAX_SIDE_FULL / wFull, MAX_SIDE_FULL / hFull);
-        wFull = Math.round(wFull * ratio);
-        hFull = Math.round(hFull * ratio);
+      // Comprimir manteniendo la mayor calidad posible dentro de ~1 MB base64
+      const MAX_SIDE = 1600; // px máximo por lado
+      let w = img.width, h = img.height;
+      if (w > MAX_SIDE || h > MAX_SIDE) {
+        const ratio = Math.min(MAX_SIDE / w, MAX_SIDE / h);
+        w = Math.round(w * ratio);
+        h = Math.round(h * ratio);
       }
-      const canvasFull = document.createElement('canvas');
-      canvasFull.width = wFull; canvasFull.height = hFull;
-      const ctxFull = canvasFull.getContext('2d');
-      ctxFull.drawImage(img, 0, 0, wFull, hFull);
-      let qualityFull = 0.88;
-      let resultFull = canvasFull.toDataURL('image/jpeg', qualityFull);
-      while (resultFull.length > 1200000 && qualityFull > 0.45) {
-        qualityFull -= 0.08;
-        resultFull = canvasFull.toDataURL('image/jpeg', qualityFull);
+      const canvas = document.createElement('canvas');
+      canvas.width = w; canvas.height = h;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0, w, h);
+
+      // Intentar con calidad alta; reducir solo si supera ~900 KB base64 (~675 KB binario)
+      let quality = 0.88;
+      let result = canvas.toDataURL('image/jpeg', quality);
+      while (result.length > 920000 && quality > 0.4) {
+        quality -= 0.08;
+        result = canvas.toDataURL('image/jpeg', quality);
       }
 
-      // Generar miniatura (thumb) para la grilla
-      const MAX_SIDE_THUMB = 720;
-      let wThumb = img.width, hThumb = img.height;
-      if (wThumb > MAX_SIDE_THUMB || hThumb > MAX_SIDE_THUMB) {
-        const ratio = Math.min(MAX_SIDE_THUMB / wThumb, MAX_SIDE_THUMB / hThumb);
-        wThumb = Math.round(wThumb * ratio);
-        hThumb = Math.round(hThumb * ratio);
-      }
-      const canvasThumb = document.createElement('canvas');
-      canvasThumb.width = wThumb; canvasThumb.height = hThumb;
-      const ctxThumb = canvasThumb.getContext('2d');
-      ctxThumb.drawImage(img, 0, 0, wThumb, hThumb);
-      let qualityThumb = 0.72;
-      let resultThumb = canvasThumb.toDataURL('image/jpeg', qualityThumb);
-      while (resultThumb.length > 420000 && qualityThumb > 0.35) {
-        qualityThumb -= 0.06;
-        resultThumb = canvasThumb.toDataURL('image/jpeg', qualityThumb);
-      }
-
-      imageBase64Full = resultFull;
-      imageBase64Thumb = resultThumb;
+      imageBase64 = result;
       const preview = document.getElementById('img-preview');
-      preview.src = imageBase64Thumb || imageBase64Full;
+      preview.src = imageBase64;
       preview.style.display = 'block';
       document.getElementById('img-remove-btn').style.display = 'inline-block';
       document.querySelectorAll('#upload-zone > svg, #upload-zone > p, #upload-zone > small').forEach(el => el.style.display = 'none');
 
-      const kb = Math.round((imageBase64Thumb || imageBase64Full).length * 0.75 / 1024);
+      const kb = Math.round(result.length * 0.75 / 1024);
       showToast(`Imagen lista (≈${kb} KB)`, 'success');
     };
     img.src = e.target.result;
@@ -1238,7 +1218,7 @@ function processImageFile(file) {
 }
 
 function removeImage() {
-  imageBase64Full = null; imageBase64Thumb = null;
+  imageBase64 = null;
   document.getElementById('f-image').value = '';
   const preview = document.getElementById('img-preview');
   preview.src = ''; preview.style.display = 'none';
@@ -1246,6 +1226,34 @@ function removeImage() {
   document.querySelectorAll('#upload-zone > svg, #upload-zone > p, #upload-zone > small').forEach(el => el.style.display = '');
 }
 
+function resetForm() {
+  document.getElementById('f-title').value = '';
+  document.getElementById('f-caption').value = '';
+  document.getElementById('f-price').value = '';
+  removeImage();
+}
+
+// ══════════════════════════════════════════════════════════
+//  UTILITIES
+// ══════════════════════════════════════════════════════════
+function escHtml(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+let toastTimer;
+function showToast(msg, type = '') {
+  const toast = document.getElementById('toast');
+  const msgEl = document.getElementById('toast-msg');
+  msgEl.textContent = msg;
+  toast.className = 'toast' + (type ? ' ' + type : '');
+  // Force reflow then add show
+  toast.offsetHeight;
+  toast.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => toast.classList.remove('show'), 3000);
+}
+
+/* ------------------ Editor de Página (site) ------------------ */
 function selectPageEditor(btn, id, name) {
   document.querySelectorAll('.leaf').forEach(l => l.classList.remove('sel'));
   document.querySelectorAll('.acc-btn.leaf-dir').forEach(b => b.classList.remove('sel'));
@@ -1292,6 +1300,15 @@ function renderSiteEditor() {
           <div class="form-field">
             <label>Color de texto</label>
             <input type="color" id="site-text" value="${cfg.textColor||'#2d3a58'}">
+          </div>
+        </div>
+        <div class="form-row single">
+          <div class="form-field">
+            <label>Tamaño base de letra</label>
+            <div style="display:flex;align-items:center;gap:8px;">
+              <input type="range" id="site-font-size" min="12" max="22" value="${cfg.baseFontSize||16}" oninput="document.getElementById('site-font-size-val').textContent=this.value+'px'">
+              <div style="width:56px;text-align:center;font-weight:700" id="site-font-size-val">${cfg.baseFontSize||16}px</div>
+            </div>
           </div>
         </div>
         <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:10px;">
@@ -1348,6 +1365,7 @@ function saveSiteConfig() {
     brandTitle: document.getElementById('site-brand').value.trim(),
     bgColor: document.getElementById('site-bg').value,
     textColor: document.getElementById('site-text').value,
+    baseFontSize: parseInt(document.getElementById('site-font-size')?.value || 16, 10),
   };
   localStorage.setItem('tolomeo_site_config', JSON.stringify(cfg));
   showToast('Configuración de la página guardada', 'success');

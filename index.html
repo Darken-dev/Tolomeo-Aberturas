@@ -255,7 +255,7 @@
     }
     .prod-card:hover { transform: translateY(-5px); box-shadow: var(--shadow); }
     .prod-card img {
-      width: 100%; height: 185px; object-fit: cover; display: block;
+      width: 100%; max-width: 100%; height: 185px; object-fit: cover; display: block;
     }
     .prod-card-placeholder {
       width: 100%; height: 185px;
@@ -506,11 +506,11 @@
 </a>
 
 <!-- Lightbox modal para ver publicación completa -->
-<div id="lightbox" style="display:none;position:fixed;inset:0;align-items:center;justify-content:center;background:rgba(0,0,0,0.75);z-index:9999;">
-  <div style="max-width:920px;width:92%;background:#fff;border-radius:12px;overflow:hidden;">
+<div id="lightbox" onclick="if(event.target===this) closeLightbox()" style="display:none;position:fixed;inset:0;align-items:center;justify-content:center;background:rgba(0,0,0,0.75);z-index:9999;padding:24px;overflow:auto;">
+  <div style="max-width:920px;width:100%;background:#fff;border-radius:12px;overflow:hidden;max-height:92vh;">
     <div style="position:relative;padding:12px;text-align:right;background:#111;color:#fff;"></div>
-    <div style="padding:18px;text-align:center;">
-      <img id="lightbox-img" src="" alt="" style="max-width:100%;height:auto;border-radius:8px;display:block;margin:0 auto 12px;">
+    <div style="padding:18px;text-align:center;overflow:hidden;">
+      <img id="lightbox-img" src="" alt="" style="max-width:100%;max-height:70vh;height:auto;border-radius:8px;display:block;margin:0 auto 12px;">
       <div id="lightbox-title" style="font-weight:800;color:#222;margin-bottom:6px"></div>
       <div id="lightbox-caption" style="color:#444;line-height:1.5"></div>
       <div style="margin-top:12px;text-align:center;"><button onclick="closeLightbox()" style="padding:8px 14px;border-radius:8px;border:none;background:#0c2461;color:#fff;cursor:pointer">Cerrar</button></div>
@@ -713,6 +713,7 @@ function applySiteConfig() {
       }
       if (cfg.bgColor) document.body.style.background = cfg.bgColor;
       if (cfg.textColor) document.body.style.color = cfg.textColor;
+      if (cfg.baseFontSize) document.documentElement.style.fontSize = (cfg.baseFontSize)+'px';
     }
     const secs = JSON.parse(localStorage.getItem('tolomeo_site_sections') || 'null');
     const container = document.getElementById('site-sections');
