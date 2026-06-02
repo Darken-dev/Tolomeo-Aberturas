@@ -701,38 +701,47 @@ function closeLightbox() {
   document.getElementById('lightbox-img').src = '';
 }
 
-/* Cargar configuración y secciones guardadas en localStorage */
-function applySiteConfig() {
+/* Cargar configuración y secciones desde Firestore */
+async function applySiteConfig() {
+  if (!db) return;
   try {
-    const cfg = JSON.parse(localStorage.getItem('tolomeo_site_config') || 'null');
-    if (cfg) {
-      if (cfg.pageTitle) document.title = cfg.pageTitle;
+    const [cfgDoc, secsDoc] = await Promise.all([
+      db.collection('siteConfig').doc('config').get(),
+      db.collection('siteConfig').doc('sections').get(),
+    ]);
+
+    if (cfgDoc.exists) {
+      const cfg = cfgDoc.data();
+      if (cfg.pageTitle)    document.title = cfg.pageTitle;
       if (cfg.brandTitle) {
         const h = document.querySelector('.brand-text h1');
         if (h) h.textContent = cfg.brandTitle;
       }
-      if (cfg.bgColor) document.body.style.background = cfg.bgColor;
-      if (cfg.textColor) document.body.style.color = cfg.textColor;
-      if (cfg.baseFontSize) document.documentElement.style.fontSize = (cfg.baseFontSize)+'px';
+      if (cfg.bgColor)      document.body.style.background = cfg.bgColor;
+      if (cfg.textColor)    document.body.style.color = cfg.textColor;
+      if (cfg.baseFontSize) document.documentElement.style.fontSize = cfg.baseFontSize + 'px';
     }
-    const secs = JSON.parse(localStorage.getItem('tolomeo_site_sections') || 'null');
-    const container = document.getElementById('site-sections');
-    if (Array.isArray(secs) && container) {
-      container.innerHTML = '';
-      secs.forEach(s => {
-        const el = document.createElement('section');
-        el.style.padding = '28px 24px';
-        el.style.maxWidth = '1240px';
-        el.style.margin = '0 auto';
-        el.innerHTML = `<h2 style="font-size:1.3rem;color:var(--blue-800);margin-bottom:8px">${escHtml(s.title||'')}</h2><div style="color:inherit">${s.content||''}</div>`;
-        container.appendChild(el);
-      });
+
+    if (secsDoc.exists) {
+      const secs = secsDoc.data()?.items || [];
+      const container = document.getElementById('site-sections');
+      if (Array.isArray(secs) && container) {
+        container.innerHTML = '';
+        secs.forEach(s => {
+          const el = document.createElement('section');
+          el.style.padding = '28px 24px';
+          el.style.maxWidth = '1240px';
+          el.style.margin = '0 auto';
+          el.innerHTML = `<h2 style="font-size:1.3rem;color:var(--blue-800);margin-bottom:8px">${escHtml(s.title||'')}</h2><div style="color:inherit">${s.content||''}</div>`;
+          container.appendChild(el);
+        });
+      }
     }
   } catch(e) { console.warn('applySiteConfig error', e); }
 }
 
 // Aplicar configuración al cargar la página
-try { applySiteConfig(); } catch(e) {}
+applySiteConfig();
 </script>
 </body>
 </html>
