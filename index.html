@@ -650,9 +650,9 @@ function renderProducts(catName, products) {
     html += '<div class="prod-grid">';
     products.forEach(p => {
       html += `<div class="prod-card">
-        ${p.imageBase64
-          ? `<img src="${p.imageBase64}" alt="${escHtml(p.title || '')}" loading="lazy">`
-          : imgPlaceholder}
+            ${ (p.imageThumbBase64 || p.imageBase64)
+              ? `<img src="${p.imageThumbBase64 || p.imageBase64}" alt="${escHtml(p.title || '')}" loading="lazy">`
+              : imgPlaceholder}
         <div class="prod-info">
           <div class="prod-title">${escHtml(p.title || 'Sin título')}</div>
           ${p.caption ? `<div class="prod-caption">${escHtml(p.caption)}</div>` : ''}
@@ -674,7 +674,7 @@ function renderProducts(catName, products) {
         img.style.cursor = 'pointer';
         img.addEventListener('click', () => {
           const p = products[i] || {};
-          openLightbox(p.imageBase64 || img.src, p.caption || '', p.title || '');
+          openLightbox(p.imageBase64 || p.imageThumbBase64 || img.src, p.caption || '', p.title || '');
         });
       }
     });
