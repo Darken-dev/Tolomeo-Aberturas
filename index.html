@@ -385,6 +385,9 @@
   </div>
 </header>
 
+<!-- Secciones gestionables por Admin -->
+<div id="site-sections"></div>
+
 <!-- ═══ LAYOUT ═══════════════════════════════════════════ -->
 <div class="layout">
 
@@ -501,6 +504,19 @@
 <a href="Admin.html" class="admin-fab" title="Administración">
   <svg viewBox="0 0 24 24"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4z"/></svg>
 </a>
+
+<!-- Lightbox modal para ver publicación completa -->
+<div id="lightbox" style="display:none;position:fixed;inset:0;align-items:center;justify-content:center;background:rgba(0,0,0,0.75);z-index:9999;">
+  <div style="max-width:920px;width:92%;background:#fff;border-radius:12px;overflow:hidden;">
+    <div style="position:relative;padding:12px;text-align:right;background:#111;color:#fff;"></div>
+    <div style="padding:18px;text-align:center;">
+      <img id="lightbox-img" src="" alt="" style="max-width:100%;height:auto;border-radius:8px;display:block;margin:0 auto 12px;">
+      <div id="lightbox-title" style="font-weight:800;color:#222;margin-bottom:6px"></div>
+      <div id="lightbox-caption" style="color:#444;line-height:1.5"></div>
+      <div style="margin-top:12px;text-align:center;"><button onclick="closeLightbox()" style="padding:8px 14px;border-radius:8px;border:none;background:#0c2461;color:#fff;cursor:pointer">Cerrar</button></div>
+    </div>
+  </div>
+</div>
 
 <!-- ═══ SCRIPTS ════════════════════════════════════════════ -->
 <script>
@@ -648,6 +664,21 @@ function renderProducts(catName, products) {
   }
 
   main.innerHTML = html;
+
+  // Añadir listeners para abrir lightbox al tocar la imagen
+  try {
+    const cards = main.querySelectorAll('.prod-grid .prod-card');
+    cards.forEach((card, i) => {
+      const img = card.querySelector('img');
+      if (img) {
+        img.style.cursor = 'pointer';
+        img.addEventListener('click', () => {
+          const p = products[i] || {};
+          openLightbox(p.imageBase64 || img.src, p.caption || '', p.title || '');
+        });
+      }
+    });
+  } catch(e) { console.warn('lightbox init error', e); }
 }
 
 function escHtml(s) {
@@ -655,6 +686,52 @@ function escHtml(s) {
     .replace(/&/g,'&amp;').replace(/</g,'&lt;')
     .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
+
+/* Lightbox */
+function openLightbox(src, caption, title) {
+  const box = document.getElementById('lightbox');
+  document.getElementById('lightbox-img').src = src || '';
+  document.getElementById('lightbox-caption').textContent = caption || '';
+  document.getElementById('lightbox-title').textContent = title || '';
+  box.style.display = 'flex';
+}
+function closeLightbox() {
+  const box = document.getElementById('lightbox');
+  box.style.display = 'none';
+  document.getElementById('lightbox-img').src = '';
+}
+
+/* Cargar configuración y secciones guardadas en localStorage */
+function applySiteConfig() {
+  try {
+    const cfg = JSON.parse(localStorage.getItem('tolomeo_site_config') || 'null');
+    if (cfg) {
+      if (cfg.pageTitle) document.title = cfg.pageTitle;
+      if (cfg.brandTitle) {
+        const h = document.querySelector('.brand-text h1');
+        if (h) h.textContent = cfg.brandTitle;
+      }
+      if (cfg.bgColor) document.body.style.background = cfg.bgColor;
+      if (cfg.textColor) document.body.style.color = cfg.textColor;
+    }
+    const secs = JSON.parse(localStorage.getItem('tolomeo_site_sections') || 'null');
+    const container = document.getElementById('site-sections');
+    if (Array.isArray(secs) && container) {
+      container.innerHTML = '';
+      secs.forEach(s => {
+        const el = document.createElement('section');
+        el.style.padding = '28px 24px';
+        el.style.maxWidth = '1240px';
+        el.style.margin = '0 auto';
+        el.innerHTML = `<h2 style="font-size:1.3rem;color:var(--blue-800);margin-bottom:8px">${escHtml(s.title||'')}</h2><div style="color:inherit">${s.content||''}</div>`;
+        container.appendChild(el);
+      });
+    }
+  } catch(e) { console.warn('applySiteConfig error', e); }
+}
+
+// Aplicar configuración al cargar la página
+try { applySiteConfig(); } catch(e) {}
 </script>
 </body>
 </html>
