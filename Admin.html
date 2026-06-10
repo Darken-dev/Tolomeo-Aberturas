@@ -778,6 +778,7 @@ function initFirebase(cfg) {
     if (!firebase.apps.length) firebase.initializeApp(cfg);
     auth = firebase.auth();
     db   = firebase.firestore();
+    auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
 
     // ── Verificar si llegamos desde un Magic Link ──────────
     // En Firebase compat, isSignInWithEmailLink es método de la instancia auth
