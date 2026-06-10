@@ -8,7 +8,10 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;600;700;800;900&family=Merriweather:ital,wght@0,300;1,300&display=swap" rel="stylesheet">
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+  <!-- firebase-config.js está en .gitignore y NO se sube al repo -->
+  <script src="firebase-config.js"></script>
   <style>
     :root {
       --blue-900: #0a1f44;
@@ -579,20 +582,31 @@
       <svg viewBox="0 0 24 24"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 2.18l7 3.12V11c0 4.31-2.99 8.34-7 9.56C7.99 19.34 5 15.31 5 11V6.3l7-3.12z"/></svg>
     </div>
     <h2>Panel de Administración</h2>
-    <p>Ingresá tus credenciales para gestionar el catálogo</p>
-    <div class="field-group">
-      <label>Usuario</label>
-      <input type="text" id="login-user" placeholder="Usuario" autocomplete="username" onkeydown="if(event.key==='Enter')doLogin()">
+    <p id="login-subtitle">Ingresá tu email y te enviamos un link de acceso seguro</p>
+
+    <!-- PASO 1: ingresar email -->
+    <div id="login-step-1">
+      <div class="field-group">
+        <label>Email</label>
+        <input type="email" id="login-user" placeholder="tu@email.com" autocomplete="email" onkeydown="if(event.key==='Enter')doLogin()">
+      </div>
+      <button class="btn-primary" onclick="doLogin()">
+        Enviar link de acceso
+      </button>
     </div>
-    <div class="field-group">
-      <label>Contraseña</label>
-      <input type="password" id="login-pass" placeholder="Contraseña" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()">
+
+    <!-- PASO 2: confirmación de envío -->
+    <div id="login-step-2" style="display:none">
+      <div style="background:var(--green-50);border:1px solid #bbf7d0;border-radius:12px;padding:20px;margin-bottom:20px;text-align:left">
+        <p style="color:var(--green);font-weight:700;margin-bottom:6px">✅ Link enviado</p>
+        <p style="color:#166534;font-size:0.82rem;line-height:1.6">Revisá tu casilla de correo y hacé clic en el link para ingresar. Podés cerrar esta pestaña.</p>
+      </div>
+      <button class="btn-primary" style="background:var(--gray-100);color:var(--gray-500);box-shadow:none" onclick="backToEmail()">
+        Usar otro email
+      </button>
     </div>
-    <button class="btn-primary" onclick="doLogin()">
-      Ingresar al panel
-    </button>
     <div class="login-error" id="login-error">
-      ❌ Usuario o contraseña incorrectos
+      ❌ Ingresá un email válido
     </div>
   </div>
 </div>
@@ -729,49 +743,6 @@
   </div>
 </div>
 
-<!-- ═══ FIREBASE CONFIG MODAL ════════════════════════════ -->
-<div id="firebase-config-modal" class="open">
-  <div class="config-card">
-    <h3>⚙️ Configuración de Firebase</h3>
-    <p>Esta configuración se guarda en tu navegador. Obtené estos valores desde <strong>console.firebase.google.com</strong> → Tu proyecto → Configuración del proyecto.</p>
-    <div class="config-info">
-      <strong>🔥 Importante:</strong> En Firebase Console, habilitá <strong>Firestore Database</strong> y configurá las reglas para permitir lectura/escritura. También habilitá <strong>Authentication → Anonymous</strong>.
-    </div>
-    <div class="config-grid">
-      <div class="config-field" style="grid-column:1/-1">
-        <label>API Key</label>
-        <input type="text" id="cfg-apiKey" placeholder="AIzaSy...">
-      </div>
-      <div class="config-field">
-        <label>Auth Domain</label>
-        <input type="text" id="cfg-authDomain" placeholder="mi-proyecto.firebaseapp.com">
-      </div>
-      <div class="config-field">
-        <label>Project ID</label>
-        <input type="text" id="cfg-projectId" placeholder="mi-proyecto-id">
-      </div>
-      <div class="config-field">
-        <label>Storage Bucket</label>
-        <input type="text" id="cfg-storageBucket" placeholder="mi-proyecto.appspot.com">
-      </div>
-      <div class="config-field">
-        <label>Messaging Sender ID</label>
-        <input type="text" id="cfg-messagingSenderId" placeholder="123456789">
-      </div>
-      <div class="config-field" style="grid-column:1/-1">
-        <label>App ID</label>
-        <input type="text" id="cfg-appId" placeholder="1:123456789:web:abc123...">
-      </div>
-    </div>
-    <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:4px;">
-      <button class="btn-cancel" id="cfg-skip-btn" onclick="skipFirebaseConfig()">Omitir por ahora</button>
-      <button class="btn-save" onclick="saveFirebaseConfig()">
-        <svg viewBox="0 0 24 24"><path d="M17 3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V7l-4-4zm-5 16c-1.66 0-3-1.34-3-3s1.34-3 3-3 3 1.34 3 3-1.34 3-3 3zm3-10H5V5h10v4z"/></svg>
-        Guardar y conectar
-      </button>
-    </div>
-  </div>
-</div>
 
 <!-- ═══ TOAST ═════════════════════════════════════════════ -->
 <div class="toast" id="toast">
@@ -784,103 +755,141 @@
 // ══════════════════════════════════════════════════════════
 //  STATE
 // ══════════════════════════════════════════════════════════
-let db = null;
-let currentCatId = null;
-let currentCatName = null;
+let db   = null;
+let auth = null;
+let currentCatId    = null;
+let currentCatName  = null;
 let pendingDeleteId = null;
-let imageBase64 = null;
-const ADMIN_USER = 'Mariano';
-const ADMIN_PASS = '1943';
+let imageBase64     = null;
 
 // ══════════════════════════════════════════════════════════
-//  FIREBASE CONFIG (hardcoded)
+//  WHITELIST — solo estos emails pueden acceder al admin
+//  Agregá los tuyos acá (en minúsculas)
 // ══════════════════════════════════════════════════════════
-const FIREBASE_CONFIG = {
-  apiKey: "AIzaSyB_3dI3r7xtNw__MXX20mnCAksZnpQCD9U",
-  authDomain: "tolomeopuertasyventnas.firebaseapp.com",
-  databaseURL: "https://tolomeopuertasyventnas-default-rtdb.firebaseio.com",
-  projectId: "tolomeopuertasyventnas",
-  storageBucket: "tolomeopuertasyventnas.firebasestorage.app",
-  messagingSenderId: "12516780742",
-  appId: "1:12516780742:web:d02cf94fbde8c9498545c7",
-  measurementId: "G-V3DTZWJCN6"
-};
+const ADMIN_EMAILS = [
+  'majafer2772@gmail.com'   // ← reemplazá con tu email real
+];
 
-function loadSavedConfig() {
-  return FIREBASE_CONFIG;
-}
-
-function populateConfigForm(cfg) {
-  if (!cfg) return;
-  document.getElementById('cfg-apiKey').value = cfg.apiKey || '';
-  document.getElementById('cfg-authDomain').value = cfg.authDomain || '';
-  document.getElementById('cfg-projectId').value = cfg.projectId || '';
-  document.getElementById('cfg-storageBucket').value = cfg.storageBucket || '';
-  document.getElementById('cfg-messagingSenderId').value = cfg.messagingSenderId || '';
-  document.getElementById('cfg-appId').value = cfg.appId || '';
-}
-
-function saveFirebaseConfig() {
-  const cfg = {
-    apiKey:            document.getElementById('cfg-apiKey').value.trim(),
-    authDomain:        document.getElementById('cfg-authDomain').value.trim(),
-    projectId:         document.getElementById('cfg-projectId').value.trim(),
-    storageBucket:     document.getElementById('cfg-storageBucket').value.trim(),
-    messagingSenderId: document.getElementById('cfg-messagingSenderId').value.trim(),
-    appId:             document.getElementById('cfg-appId').value.trim(),
-  };
-  if (!cfg.apiKey || !cfg.projectId) {
-    showToast('Completá al menos la API Key y el Project ID', 'error'); return;
-  }
-  localStorage.setItem('tolomeo_fb_config', JSON.stringify(cfg));
-  initFirebase(cfg);
-  document.getElementById('firebase-config-modal').classList.remove('open');
-  showToast('Firebase conectado correctamente ✓', 'success');
-}
-
-function skipFirebaseConfig() {
-  document.getElementById('firebase-config-modal').classList.remove('open');
-}
-
+// ══════════════════════════════════════════════════════════
+//  FIREBASE INIT
+// ══════════════════════════════════════════════════════════
 function initFirebase(cfg) {
   try {
-    if (!firebase.apps.length) {
-      firebase.initializeApp(cfg);
+    if (!firebase.apps.length) firebase.initializeApp(cfg);
+    auth = firebase.auth();
+    db   = firebase.firestore();
+
+    // ── Verificar si llegamos desde un Magic Link ──────────
+    // En Firebase compat, isSignInWithEmailLink es método de la instancia auth
+    if (auth.isSignInWithEmailLink(window.location.href)) {
+      let email = window.localStorage.getItem('tolomeo_admin_email');
+      if (!email) {
+        email = window.prompt('Confirmá tu email para ingresar:');
+      }
+      if (email) {
+        auth.signInWithEmailLink(email, window.location.href)
+          .then(() => {
+            window.localStorage.removeItem('tolomeo_admin_email');
+            // Limpiar la URL para no re-procesar el link
+            window.history.replaceState({}, document.title, window.location.pathname);
+          })
+          .catch(e => {
+            console.error('Error al verificar link:', e);
+            showLoginError('El link expiró o ya fue usado. Solicitá uno nuevo.');
+          });
+      }
     }
-    db = firebase.firestore();
+
+    // ── Observar estado de autenticación ──────────────────
+    auth.onAuthStateChanged(user => {
+      if (user && ADMIN_EMAILS.includes(user.email.toLowerCase())) {
+        // Email autorizado — mostrar panel
+        document.getElementById('login-screen').style.display = 'none';
+        document.getElementById('admin-panel').style.display  = 'block';
+        document.getElementById('admin-greeting').style.display  = 'inline-flex';
+        document.getElementById('btn-logout').style.display      = 'inline-flex';
+      } else if (user) {
+        // Email NO autorizado — cerrar sesión inmediatamente
+        auth.signOut();
+        showLoginError('Este email no tiene acceso al panel.');
+      } else {
+        // No autenticado — mostrar login
+        document.getElementById('login-screen').style.display = 'flex';
+        document.getElementById('admin-panel').style.display  = 'none';
+        document.getElementById('admin-greeting').style.display = 'none';
+        document.getElementById('btn-logout').style.display    = 'none';
+        currentCatId = null; currentCatName = null;
+      }
+    });
   } catch(e) {
     console.error('Error inicializando Firebase:', e);
-    db = null;
   }
 }
 
 // ══════════════════════════════════════════════════════════
-//  LOGIN
+//  LOGIN — Magic Link (Email Link / Passwordless)
 // ══════════════════════════════════════════════════════════
-function doLogin() {
-  const user = document.getElementById('login-user').value.trim();
-  const pass = document.getElementById('login-pass').value;
-  if (user === ADMIN_USER && pass === ADMIN_PASS) {
-    document.getElementById('login-screen').style.display = 'none';
-    document.getElementById('admin-panel').style.display = 'block';
-    document.getElementById('admin-greeting').style.display = 'inline-flex';
-    document.getElementById('btn-logout').style.display = 'inline-flex';
-    document.getElementById('login-error').classList.remove('show');
-  } else {
-    document.getElementById('login-error').classList.add('show');
-    document.getElementById('login-pass').value = '';
-    document.getElementById('login-pass').focus();
+async function doLogin() {
+  const email = document.getElementById('login-user').value.trim().toLowerCase();
+  const btn   = document.querySelector('#login-step-1 .btn-primary');
+
+  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    showLoginError('Ingresá un email válido.');
+    return;
+  }
+
+  // Solo permitir emails de la whitelist
+  if (!ADMIN_EMAILS.includes(email)) {
+    showLoginError('Este email no tiene acceso al panel.');
+    return;
+  }
+
+  btn.disabled    = true;
+  btn.textContent = 'Enviando…';
+  document.getElementById('login-error').classList.remove('show');
+
+  const actionCodeSettings = {
+    // URL dinámica: funciona tanto en local como en GitHub Pages
+    url: window.location.origin + window.location.pathname,
+    handleCodeInApp: true,
+  };
+
+  try {
+    await auth.sendSignInLinkToEmail(email, actionCodeSettings);
+    window.localStorage.setItem('tolomeo_admin_email', email);
+    // Mostrar paso 2 (confirmación)
+    document.getElementById('login-step-1').style.display = 'none';
+    document.getElementById('login-step-2').style.display = 'block';
+  } catch(e) {
+    let msg = 'Error al enviar el email. Intentá de nuevo.';
+    if (e.code === 'auth/too-many-requests')      msg = 'Demasiados intentos. Esperá unos minutos.';
+    if (e.code === 'auth/network-request-failed')  msg = 'Sin conexión a internet.';
+    if (e.code === 'auth/operation-not-allowed')   msg = 'Magic Link no está habilitado. En Firebase Console: Authentication → Sign-in method → Email link → Activar.';
+    if (e.code === 'auth/unauthorized-continue-uri') msg = 'Dominio no autorizado. Agregá este dominio en Firebase Console: Authentication → Settings → Authorized domains.';
+    showLoginError(msg);
+  } finally {
+    btn.disabled    = false;
+    btn.textContent = 'Enviar link de acceso';
   }
 }
 
-function logout() {
-  document.getElementById('login-screen').style.display = 'flex';
-  document.getElementById('admin-panel').style.display = 'none';
-  document.getElementById('admin-greeting').style.display = 'none';
-  document.getElementById('btn-logout').style.display = 'none';
+function backToEmail() {
+  document.getElementById('login-step-1').style.display = 'block';
+  document.getElementById('login-step-2').style.display = 'none';
   document.getElementById('login-user').value = '';
-  document.getElementById('login-pass').value = '';
-  currentCatId = null; currentCatName = null;
+  document.getElementById('login-error').classList.remove('show');
+}
+
+function showLoginError(msg) {
+  const el = document.getElementById('login-error');
+  el.textContent = '❌ ' + msg;
+  el.classList.add('show');
+}
+
+async function logout() {
+  try { await auth.signOut(); } catch(e) { console.warn(e); }
+  document.getElementById('login-user').value = '';
+  backToEmail();
 }
 
 // ══════════════════════════════════════════════════════════
@@ -1427,12 +1436,11 @@ async function deleteSection(index) {
 //  INIT
 // ══════════════════════════════════════════════════════════
 (function init() {
-  const saved = loadSavedConfig();
-  if (saved && saved.apiKey) {
-    populateConfigForm(saved);
-    initFirebase(saved);
-    // If already configured, close config modal automatically
-    document.getElementById('firebase-config-modal').classList.remove('open');
+  // FIREBASE_CONFIG viene de firebase-config.js (cargado en el <head>, en .gitignore)
+  if (typeof FIREBASE_CONFIG !== 'undefined' && FIREBASE_CONFIG.apiKey) {
+    initFirebase(FIREBASE_CONFIG);
+  } else {
+    console.error('firebase-config.js no encontrado. Creá el archivo con tus credenciales.');
   }
 })();
 </script>

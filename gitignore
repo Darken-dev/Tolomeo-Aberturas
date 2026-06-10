@@ -1,0 +1,17 @@
+# ══════════════════════════════════════════
+#  .gitignore — Tolomeo Aberturas
+# ══════════════════════════════════════════
+
+# Configuración Firebase — NUNCA subir al repo
+firebase-config.js
+
+# Archivos del sistema
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Editores
+.vscode/
+.idea/
+*.swp
+*.swo

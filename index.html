@@ -9,6 +9,8 @@
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;600;700;800;900&family=Merriweather:ital,wght@0,300;1,300&display=swap" rel="stylesheet">
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+  <!-- firebase-config.js está en .gitignore y NO se sube al repo -->
+  <script src="firebase-config.js"></script>
   <style>
     :root {
       --blue-900: #0a1f44;
@@ -744,26 +746,9 @@
 
 <!-- ═══ SCRIPTS ════════════════════════════════════════════ -->
 <script>
-// ╔══════════════════════════════════════════════════════════╗
-// ║  CONFIGURACIÓN FIREBASE — se puede guardar desde Admin   ║
-// ║  Obtené estos valores desde: console.firebase.google.com ║
-// ╚══════════════════════════════════════════════════════════╝
-const FIREBASE_CONFIG = {
-  apiKey: "AIzaSyB_3dI3r7xtNw__MXX20mnCAksZnpQCD9U",
-  authDomain: "tolomeopuertasyventnas.firebaseapp.com",
-  databaseURL: "https://tolomeopuertasyventnas-default-rtdb.firebaseio.com",
-  projectId: "tolomeopuertasyventnas",
-  storageBucket: "tolomeopuertasyventnas.firebasestorage.app",
-  messagingSenderId: "12516780742",
-  appId: "1:12516780742:web:d02cf94fbde8c9498545c7",
-  measurementId: "G-V3DTZWJCN6"
-};
+// FIREBASE_CONFIG viene de firebase-config.js (cargado en el <head>)
+// Ese archivo está en .gitignore y nunca se sube al repositorio.
 
-// ╔══════════════════════════════════════════════════════════╗
-// ║  CONTACTO — ACTUALIZAR CON DATOS REALES                 ║
-// ╚══════════════════════════════════════════════════════════╝
-// WhatsApp: reemplazá XXXXXXXXXX con tu número (sin 0 ni 15)
-// Instagram: reemplazá tolomeoaberturas con tu usuario
 
 let db = null;
 let selLeaf = null;
