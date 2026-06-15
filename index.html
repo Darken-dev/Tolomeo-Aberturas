@@ -112,6 +112,8 @@
     .btn-wa:hover  { background: #16a34a; transform: translateY(-2px); box-shadow: 0 8px 24px rgba(34,197,94,0.45); }
     .btn-ig  { background: linear-gradient(45deg,#f59e0b,#ef4444,#a855f7); color: #fff; }
     .btn-ig:hover  { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(168,85,247,0.45); }
+    .btn-review { background: #f59e0b; color: #fff; border: none; cursor: pointer; }
+    .btn-review:hover { background: #d97706; transform: translateY(-2px); box-shadow: 0 8px 24px rgba(245,158,11,0.35); }
 
     .header-bar {
       background: rgba(0,0,0,0.18);
@@ -481,6 +483,10 @@
         <svg viewBox="0 0 24 24"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg>
         Instagram
       </a>
+      <button type="button" class="btn-contact btn-review" id="reviewPromptBtn">
+        <svg viewBox="0 0 24 24"><path d="M12 17.27 18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>
+        Opinar en Google
+      </button>
     </div>
   </div>
   <div class="header-bar">
@@ -744,6 +750,90 @@
   </div>
 </div>
 
+<style>
+  .review-modal {
+    display: none;
+    position: fixed;
+    inset: 0;
+    align-items: center;
+    justify-content: center;
+    background: rgba(2, 8, 23, 0.72);
+    z-index: 10000;
+    padding: 20px;
+  }
+  .review-modal-card {
+    position: relative;
+    background: #fff;
+    border-radius: 16px;
+    padding: 28px 24px 24px;
+    width: min(92vw, 420px);
+    box-shadow: 0 20px 60px rgba(0,0,0,0.28);
+    text-align: center;
+  }
+  .review-modal-close {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    border: none;
+    background: transparent;
+    font-size: 1.2rem;
+    color: #64748b;
+    cursor: pointer;
+  }
+  .review-modal-icon {
+    width: 56px;
+    height: 56px;
+    margin: 0 auto 14px;
+    border-radius: 50%;
+    background: #fef3c7;
+    color: #d97706;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.6rem;
+  }
+  .review-modal-card h3 {
+    font-size: 1.15rem;
+    color: var(--blue-800);
+    margin-bottom: 10px;
+  }
+  .review-modal-card p {
+    color: var(--gray-500);
+    font-size: 0.92rem;
+    line-height: 1.6;
+    margin-bottom: 18px;
+  }
+  .review-modal-actions {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+  .review-btn {
+    border: none;
+    border-radius: 999px;
+    padding: 10px 16px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: transform 0.2s ease;
+  }
+  .review-btn:hover { transform: translateY(-1px); }
+  .review-btn-primary { background: #2563eb; color: #fff; }
+  .review-btn-secondary { background: #e2e8f0; color: #334155; }
+</style>
+<div id="review-modal" class="review-modal" role="dialog" aria-modal="true" aria-labelledby="review-modal-title">
+  <div class="review-modal-card">
+    <button class="review-modal-close" onclick="closeReviewModal()" aria-label="Cerrar">✕</button>
+    <div class="review-modal-icon">★</div>
+    <h3 id="review-modal-title">¿Querés dejar una reseña en Google?</h3>
+    <p>Tu opinión nos ayuda mucho y solo te llevará un momento.</p>
+    <div class="review-modal-actions">
+      <button class="review-btn review-btn-secondary" onclick="closeReviewModal()">No, gracias</button>
+      <button class="review-btn review-btn-primary" onclick="openGoogleReview()">Sí, quiero opinar</button>
+    </div>
+  </div>
+</div>
+
 <!-- ═══ SCRIPTS ════════════════════════════════════════════ -->
 <script>
 // FIREBASE_CONFIG viene de firebase-config.js (cargado en el <head>)
@@ -909,6 +999,36 @@ function closeLightbox() {
   box.style.display = 'none';
   document.getElementById('lightbox-img').src = '';
 }
+
+/* Google review modal */
+const reviewModal = document.getElementById('review-modal');
+const reviewPromptBtn = document.getElementById('reviewPromptBtn');
+
+function openReviewModal() {
+  if (reviewModal) reviewModal.style.display = 'flex';
+}
+
+function closeReviewModal() {
+  if (reviewModal) reviewModal.style.display = 'none';
+}
+
+function openGoogleReview() {
+  window.open('https://www.google.com/search?gs_ssp=eJzj4tVP1zc0TDerzLHIM8oyYLRSNaiwNLUwSUlNMTJLSk4xTjNPsjKoME0zTzE2TTRONkm2NDIzN_cSLMnPyc9NzVdITEotKiktSiwGAAhXFmU&q=tolomeo+aberturas&oq=tolomeo+aber&gs_lcrp=EgZjaHJvbWUqEAgBEC4YrwEYxwEYgAQYjgUyCggAEAAY4wIYgAQyEAgBEC4YrwEYxwEYgAQYjgUyBggCEEUYOTIICAMQABgWGB4yCggEEAAYgAQYogQyBggFEEUYPDIGCAYQRRg8MgYIBxBFGDzSAQgzOTE2ajBqN6gCCLACAQ&sourceid=chrome&ie=UTF-8', '_blank', 'noopener,noreferrer');
+  closeReviewModal();
+}
+
+reviewPromptBtn?.addEventListener('click', function (event) {
+  event.preventDefault();
+  openReviewModal();
+});
+
+reviewModal?.addEventListener('click', function (event) {
+  if (event.target === reviewModal) closeReviewModal();
+});
+
+document.addEventListener('keydown', function (event) {
+  if (event.key === 'Escape') closeReviewModal();
+});
 
 /* Cargar configuración y secciones desde Firestore */
 async function applySiteConfig() {
