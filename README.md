@@ -51,3 +51,7 @@ match-3: la ficha sigue el dedo y la vecina se desplaza en sentido contrario,
 con animación al completar o deshacer el movimiento. Se cierra con el botón
 **Cerrar** o Escape; el catálogo conserva su estado. Los juegos se ejecutan en
 el navegador, no usan sensores de movimiento ni transmiten datos.
+
+En **Tirá y atrapá** y **Vóley de playa**, el jugador y Yeti se devuelven la
+pelota al tocarla. Yeti corre hacia la pelota para alcanzarla y devolverla; el
+punto se otorga al rival cuando cae en el lado de una cancha.

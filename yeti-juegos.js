@@ -18,12 +18,12 @@
     console.warn('No se encontró el SVG original del Yeti; se usará la ilustración del minijuego.');
   }
   var GAMES = [
-    { id: 'catch', category: 'Movimiento', title: 'Tirá y atrapá', help: 'Tocá la pelota para lanzársela a Yeti. También podés arrastrarla para apuntar.' },
+    { id: 'catch', category: 'Movimiento', title: 'Tirá y atrapá', help: 'Tocá la pelota para pasársela a Yeti. Cuando te la devuelva, tocala de nuevo antes de que caiga.' },
     { id: 'rope', category: 'Movimiento', title: 'Saltar la cuerda', help: 'Tocá Saltar justo antes de que la cuerda llegue al suelo.' },
     { id: 'trampoline', category: 'Movimiento', title: 'Trampolín', help: 'Tocá Rebotar cuando Yeti esté bajando y cerca de la cama elástica.' },
     { id: 'football', category: 'Deportes', title: 'Penales contra Yeti', help: 'La pelota espera abajo en el centro. Tocá un rincón del arco para patear; Yeti se mueve de lado a lado.' },
     { id: 'basket', category: 'Deportes', title: 'Básquet', help: 'Deslizá desde la pelota hacia arriba y a la derecha para encestar.' },
-    { id: 'volley', category: 'Deportes', title: 'Vóley de playa', help: 'Yeti inicia el juego. Tocá la pelota cuando llegue a tu lado para devolverla antes de que caiga.' },
+    { id: 'volley', category: 'Deportes', title: 'Vóley de playa', help: 'Yeti saca. Tocá la pelota en tu cancha para devolverla; Yeti correrá a tocarla. El punto se define cuando cae.' },
     { id: 'runner', category: 'Carreras', title: 'Carrera de obstáculos', help: 'Tocá Saltar o la barra espaciadora para pasar las vallas.' },
     { id: 'driver', category: 'Carreras', title: 'Auto de Yeti', help: 'Cambiá de carril para esquivar baches y juntar estrellas.' },
     { id: 'skate', category: 'Carreras', title: 'Monopatín', help: 'Usá izquierda y derecha para equilibrarte y saltá las rampas.' },
@@ -176,6 +176,9 @@
     canvas.addEventListener('pointercancel', onPointerCancel);
     canvas.addEventListener('pointermove', onPointerMove);
     canvas.addEventListener('contextmenu', function (event) { event.preventDefault(); });
+    drawGame(activeGame);
+    var status = content.querySelector('#yg-status');
+    if (status) status.textContent = gameStatus(activeGame);
     lastFrameTime = performance.now();
     accumulator = 0;
     frame = requestAnimationFrame(gameFrame);
@@ -214,15 +217,20 @@
       nextRamp: 3.2, jumpTime: 0, lastCycle: -1, bounces: 0, lives: 3, moves: 18,
       board: [], selected: null, busy: false, lastHit: -1
     };
-    if (id === 'catch') Object.assign(state, { ball: { x: 120, y: 334, vx: 0, vy: 0, active: false }, player: { x: 640, y: 370 } });
+    if (id === 'catch') Object.assign(state, {
+      ball: { x: 180, y: 300, vx: 0, vy: 0, active: false },
+      player: { x: 640, y: 370 }, playerScore: 0, yetiScore: 0, lastTouch: 'player',
+      status: 'Tocá la pelota para iniciar el ida y vuelta.'
+    });
     if (id === 'rope') Object.assign(state, { ropePeriod: 1.45, jumpUntil: 0, lastCycle: -1, status: '¡Preparado! Esperá el momento y saltá.' });
     if (id === 'trampoline') Object.assign(state, { player: { x: 400, y: 230, vy: 0 }, misses: 0, status: 'Tocá Rebotar cuando esté bajando cerca de la lona.' });
-    if (id === 'football') Object.assign(state, { ball: { x: 400, y: 410, vx: 0, vy: 0, active: false }, player: { x: 400, direction: 1 }, shot: 0, status: 'La pelota está en el centro. Tocá el arco para patear.' });
+    if (id === 'football') Object.assign(state, { ball: { x: 400, y: 410, vx: 0, vy: 0, targetY: null, active: false }, player: { x: 400, direction: 1 }, shot: 0, status: 'La pelota está en el centro. Tocá el arco para patear.' });
     if (id === 'basket') Object.assign(state, { ball: { x: 115, y: 345, vx: 0, vy: 0, active: false }, attempts: 0, status: 'Deslizá la pelota en arco hacia el aro.' });
     if (id === 'volley') Object.assign(state, {
-      ball: { x: 585, y: 245, vx: 0, vy: 0, active: false },
-      player: { x: 180, y: 355 }, lives: 3, lastTouch: 'yeti', serveAt: .65,
-      status: 'Yeti va a sacar. Tocá la pelota cuando vuelva a tu lado.'
+      ball: { x: 600, y: 245, vx: 0, vy: 0, active: false },
+      player: { x: 180, y: 355 }, yeti: { x: 620, y: 355 }, yetiScore: 0,
+      lastTouch: 'yeti', serveAt: .65,
+      status: 'Yeti va a sacar. Tocá la pelota cuando llegue a tu cancha.'
     });
     if (id === 'runner') Object.assign(state, { player: { y: 360, vy: 0 }, spawnTimer: 1.3, status: '¡A correr! Saltá las vallas.' });
     if (id === 'driver') Object.assign(state, { lane: 1, spawnTimer: .8, status: 'Esquivá los baches y juntá estrellas.' });
@@ -248,12 +256,12 @@
   }
 
   function gameStatus(s) {
-    if (s.id === 'catch') return 'Atrapadas: ' + s.score + (s.status ? ' · ' + s.status : '');
+    if (s.id === 'catch') return 'Puntos · Vos: ' + s.playerScore + ' · Yeti: ' + s.yetiScore + ' · ' + s.status;
     if (s.id === 'rope') return 'Saltos: ' + s.score + ' · Errores: ' + s.misses + (s.status ? ' · ' + s.status : '');
     if (s.id === 'trampoline') return 'Rebotes: ' + s.score + ' · ' + s.status;
     if (s.id === 'football') return 'Goles: ' + s.score + ' · Atajadas de Yeti: ' + s.misses + (s.status ? ' · ' + s.status : '');
     if (s.id === 'basket') return 'Encestes: ' + s.score + ' · Tiros: ' + s.attempts + ' · ' + s.status;
-    if (s.id === 'volley') return 'Toques seguidos: ' + s.score + ' · Vidas: ' + s.lives + ' · ' + s.status;
+    if (s.id === 'volley') return 'Puntos · Vos: ' + s.score + ' · Yeti: ' + s.yetiScore + ' · ' + s.status;
     if (s.id === 'runner') return s.ended ? 'Fin de carrera · Puntaje: ' + Math.floor(s.score) + ' · Tocá Reiniciar.' : 'Puntaje: ' + Math.floor(s.score);
     if (s.id === 'driver') return 'Carril: ' + (s.lane + 1) + '/3 · Estrellas: ' + s.coins + ' · Distancia: ' + Math.floor(s.elapsed) + ' m';
     if (s.id === 'skate') return s.ended ? '¡Yeti se cayó! Puntaje: ' + Math.floor(s.score) + ' · Tocá Reiniciar.' : 'Distancia: ' + Math.floor(s.score) + ' · Equilibrio: ' + Math.max(0, 100 - Math.floor(Math.abs(s.lean) * 100)) + '%';
@@ -280,16 +288,40 @@
     if (!b.active) return;
     b.x += b.vx * dt;
     b.y += b.vy * dt;
-    b.vy += 760 * dt;
-    s.player.x += Math.min(1, dt * 1.8) * (Math.max(500, Math.min(670, b.x)) - s.player.x);
-    if (b.x > 590 && b.x < 705 && Math.abs(b.y - 278) < 70) {
-      b.active = false;
-      s.score++;
-      s.status = '¡La atrapó! Volvé a tirar.';
-    } else if (b.x > 820 || b.y > 440) {
-      b.active = false;
-      s.status = 'Se escapó. Probá otro lanzamiento.';
+    b.vy += 320 * dt;
+    if (s.lastTouch === 'player' && b.x > 400) {
+      var targetX = Math.max(510, Math.min(700, b.x));
+      s.player.x += Math.sign(targetX - s.player.x) * Math.min(Math.abs(targetX - s.player.x), 360 * dt);
+      var yetiLift = Math.min(70, Math.max(0, 170 - b.y) * .5);
+      if (ballHitsYeti(b, s.player.x, 364 - yetiLift, .8, 16)) {
+        var returnTime = Math.max(.3, (b.x - 180) / 330);
+        b.vx = -330;
+        b.vy = (310 - b.y - 160 * returnTime * returnTime) / returnTime;
+        s.lastTouch = 'yeti';
+        s.status = '¡Yeti la tocó y te la devuelve!';
+      }
     }
+    if (b.y >= 392) {
+      var pointForPlayer = b.x >= 400 ? 'player' : 'yeti';
+      if (pointForPlayer === 'player') {
+        s.playerScore++;
+        s.status = '¡Punto para vos! Tocá la pelota para seguir.';
+      } else {
+        s.yetiScore++;
+        s.status = 'Punto para Yeti. Tocá la pelota para volver a jugar.';
+      }
+      b.x = 180; b.y = 300; b.vx = 0; b.vy = 0; b.active = false;
+      b.targetY = null;
+      s.lastTouch = 'player';
+    }
+  }
+
+  function ballHitsYeti(ball, x, baseY, scale, ballRadius) {
+    var radiusX = 26 * scale + ballRadius;
+    var radiusY = 30 * scale + ballRadius;
+    var dx = (ball.x - x) / radiusX;
+    var dy = (ball.y - (baseY - 52 * scale)) / radiusY;
+    return dx * dx + dy * dy <= 1;
   }
 
   function updateRope(s) {
@@ -337,6 +369,7 @@
     s.ball.y = 410;
     s.ball.vx = 0;
     s.ball.vy = 0;
+    s.ball.targetY = null;
     s.ball.active = false;
     s.saveAt = 0;
   }
@@ -349,8 +382,8 @@
       b.y += b.vy * dt;
       var keeperDelta = b.x - s.player.x;
       s.player.x += Math.sign(keeperDelta) * Math.min(Math.abs(keeperDelta), keeperSpeed * dt);
-      if (b.y <= 280) {
-        if (b.x >= 225 && b.x <= 575 && Math.abs(b.x - s.player.x) <= 48) {
+      if (b.y <= b.targetY) {
+        if (b.x >= 225 && b.x <= 575 && ballHitsYeti(b, s.player.x, 315, .88, 13)) {
           s.status = '¡Yeti atajó el penal! Apuntá al otro lado.';
           resetShot(s, false);
         } else if (b.x >= 220 && b.x <= 580) {
@@ -391,37 +424,51 @@
     if (!b.active) {
       if (s.elapsed < s.serveAt) return;
       b.active = true;
-      b.x = 585;
-      b.vx = -220;
-      b.vy = -260;
+      b.x = 600;
+      b.y = 245;
+      b.vx = -210;
+      b.vy = -300;
       s.lastTouch = 'yeti';
-      s.status = '¡Yeti sacó la pelota! Tocala cuando llegue a tu lado.';
+      s.status = '¡Yeti sacó! Tocá la pelota en tu cancha para devolverla.';
     }
+    var previousX = b.x;
     b.x += b.vx * dt;
     b.y += b.vy * dt;
-    b.vy += 460 * dt;
-    if (b.x <= 410 && b.vx < 0 && s.lastTouch === 'yeti') {
-      s.lastTouch = 'player';
-      s.status = '¡La pelota está en tu lado! Tocala para devolverla.';
+    b.vy += 380 * dt;
+
+    if (s.lastTouch === 'player' && b.vx > 0 && b.x > 400) {
+      var targetX = Math.max(440, Math.min(720, b.x));
+      s.yeti.x += Math.sign(targetX - s.yeti.x) * Math.min(Math.abs(targetX - s.yeti.x), 360 * dt);
+      var yetiLift = Math.min(70, Math.max(0, 170 - b.y) * .5);
+      if (b.x > 480 && ballHitsYeti(b, s.yeti.x, s.yeti.y - yetiLift, .68, 14)) {
+        var returnTime = Math.max(.3, (b.x - 280) / 230);
+        b.vx = -230;
+        b.vy = (260 - b.y - 190 * returnTime * returnTime) / returnTime;
+        s.lastTouch = 'yeti';
+        s.status = '¡Yeti corrió y la devolvió! Preparáte para tocarla.';
+      }
     }
-    if (b.x >= 410 && b.vx > 0) {
-      b.x = 410;
-      b.vx = -180;
-      b.y = Math.max(190, b.y);
-      b.vy = -170;
-      s.lastTouch = 'yeti';
-      s.status = '¡Yeti la tocó! Esperá a que vuelva y tocala antes de que caiga.';
+
+    var crossedNet = (previousX < 400 && b.x >= 400) || (previousX > 400 && b.x <= 400);
+    if (crossedNet && b.y >= 190) {
+      b.x = b.vx > 0 ? 390 : 410;
+      b.vx = 0;
+      b.vy = Math.max(100, Math.abs(b.vy) * .35);
+      s.status = '¡La pelota tocó la red!';
     }
     if (b.y < 30) { b.y = 30; b.vy = Math.abs(b.vy) * .72; }
-    if (b.y > 380) {
-      s.lives--;
-      b.x = 585; b.y = 245; b.vx = 0; b.vy = 0; b.active = false;
-      s.serveAt = s.elapsed + .65;
-      if (s.lives <= 0) {
-        s.lives = 3;
-        s.status = '¡Se terminó el rally! Yeti saca otra vez. Récord: ' + s.score + ' toques.';
-        s.score = 0;
-      } else s.status = 'La pelota cayó. Yeti saca otra vez; te quedan ' + s.lives + ' vidas.';
+    if (b.y >= 340) {
+      if (b.x > 400) {
+        s.score++;
+        s.status = '¡Punto para vos! Yeti vuelve a sacar.';
+      } else {
+        s.yetiScore++;
+        s.status = 'Punto para Yeti. Va otro saque.';
+      }
+      b.x = 600; b.y = 245; b.vx = 0; b.vy = 0; b.active = false;
+      s.lastTouch = 'yeti';
+      s.yeti.x = 620;
+      s.serveAt = s.elapsed + .8;
     }
   }
 
@@ -616,9 +663,17 @@
     drawWindow(137, 238, 112, 78);
     drawGate(304, 207, 142, 94);
     ctx.fillStyle = '#ffdf88'; ctx.beginPath(); ctx.arc(650, 220, 105, 0, Math.PI * 2); ctx.fill();
-    drawYeti(s.player.x, 364, .8);
+    var yetiLift = s.ball.active && s.lastTouch === 'player' && s.ball.x > 400
+      ? Math.min(70, Math.max(0, 170 - s.ball.y) * .5)
+      : 0;
+    drawYeti(s.player.x, 364 - yetiLift, .8);
     drawBall(s.ball.x, s.ball.y, 16, '#ef8b36');
-    drawText('Tocá o arrastrá la pelota para lanzársela a Yeti', 24, 38, 18);
+    if (!s.ball.active || (s.lastTouch === 'yeti' && s.ball.x <= 430)) {
+      ctx.strokeStyle = '#fff'; ctx.lineWidth = 3;
+      ctx.beginPath(); ctx.arc(s.ball.x, s.ball.y, 28, 0, Math.PI * 2); ctx.stroke();
+      drawText('TOCÁ', s.ball.x, s.ball.y - 36, 15, '#0c2461', 'center');
+    }
+    drawText('Tocá la pelota · Yeti la devuelve · ¡Que no toque el piso!', 24, 38, 18);
   }
 
   function drawRope(s) {
@@ -697,9 +752,12 @@
     ctx.fillStyle = '#fff'; ctx.fillRect(396, 190, 8, 150);
     ctx.strokeStyle = '#fff'; ctx.lineWidth = 2;
     for (var y = 200; y < 340; y += 14) { ctx.beginPath(); ctx.moveTo(390, y); ctx.lineTo(410, y); ctx.stroke(); }
-    drawYeti(600, s.player.y, .68);
+    var yetiLift = s.ball.active && s.lastTouch === 'player' && s.ball.x > 400
+      ? Math.min(70, Math.max(0, 170 - s.ball.y) * .5)
+      : 0;
+    drawYeti(s.yeti.x, s.yeti.y - yetiLift, .68);
     drawBall(s.ball.x, s.ball.y, 14, '#fbbf24');
-    if (s.ball.active && s.ball.x < 410 && s.ball.vx < 0) {
+    if (s.ball.active && s.ball.x < 430 && s.ball.vx < 0 && s.lastTouch === 'yeti') {
       ctx.strokeStyle = '#fff'; ctx.lineWidth = 3;
       ctx.beginPath(); ctx.arc(s.ball.x, s.ball.y, 27, 0, Math.PI * 2); ctx.stroke();
       drawText('TOCÁ', s.ball.x, s.ball.y - 36, 15, '#0c2461', 'center');
@@ -796,21 +854,24 @@
         var flightTime = (s.ball.y - targetY) / shotSpeed;
         s.ball.vx = (targetX - s.ball.x) / flightTime;
         s.ball.vy = -shotSpeed;
+        s.ball.targetY = targetY;
         s.ball.active = true;
         s.status = '¡Va el remate! Yeti se mueve para atajar.';
       } else s.status = 'Tocá el arco centrado para patear.';
-    } else if (s.id === 'catch' && start && !s.ball.active) {
-      var dx = start.x - end.x;
-      var dy = end.y - start.y;
-      if (Math.hypot(start.x - s.ball.x, start.y - s.ball.y) < 52) {
-        dx = 0;
-        dy = 0;
+    } else if (s.id === 'catch' && start) {
+      var isPlayerTurn = !s.ball.active || (s.lastTouch === 'yeti' && s.ball.x <= 430);
+      if (isPlayerTurn && Math.hypot(end.x - s.ball.x, end.y - s.ball.y) <= 64) {
+        var timeToYeti = Math.max(.3, (620 - s.ball.x) / 330);
+        s.ball.vx = 330;
+        s.ball.vy = (310 - s.ball.y - 160 * timeToYeti * timeToYeti) / timeToYeti;
+        s.ball.active = true;
+        s.lastTouch = 'player';
+        s.status = '¡La devolviste! Yeti va a buscarla.';
+      } else if (isPlayerTurn) {
+        s.status = 'Tocá la pelota cuando esté cerca de tu lado.';
+      } else {
+        s.status = 'Esperá a que Yeti te la devuelva.';
       }
-      s.ball.x = 120; s.ball.y = 334;
-      s.ball.vx = Math.max(260, Math.min(760, 590 + dx * 2.2));
-      s.ball.vy = Math.max(-780, Math.min(-260, -400 + dy * 2.1));
-      s.ball.active = true;
-      s.status = '';
     } else if (s.id === 'basket' && start && !s.ball.active) {
       var vx = (end.x - start.x) * 2.3;
       var vy = (end.y - start.y) * 2.45;
@@ -820,16 +881,16 @@
         s.ball.active = true; s.attempts++;
       } else s.status = 'Deslizá hacia adelante y hacia arriba.';
     } else if (s.id === 'volley') {
-      if (Math.hypot(end.x - s.ball.x, end.y - s.ball.y) <= 54 &&
-          s.ball.active && s.ball.x <= 410 && s.lastTouch === 'player') {
-        s.ball.vx = 240;
-        s.ball.vy = -390;
+      if (Math.hypot(end.x - s.ball.x, end.y - s.ball.y) <= 58 &&
+          s.ball.active && s.ball.x <= 430 && s.lastTouch === 'yeti') {
+        var timeToYeti = Math.max(.3, (620 - s.ball.x) / 230);
+        s.ball.vx = 230;
+        s.ball.vy = (320 - s.ball.y - 190 * timeToYeti * timeToYeti) / timeToYeti;
         s.lastTouch = 'player';
-        s.score++;
-        s.status = '¡Buen toque! Yeti ya va por la devolución.';
+        s.status = '¡Buen toque! Yeti corre hacia la pelota.';
       } else {
-        s.status = s.ball.x > 410
-          ? 'Esperá el saque de Yeti y tocá la pelota cuando venga a tu lado.'
+        s.status = s.ball.x > 400
+          ? 'Esperá a que Yeti la toque y llegue a tu cancha.'
           : 'Tocá la pelota amarilla cuando pase cerca del círculo blanco.';
       }
     } else if (s.id === 'driver' && start) {
@@ -855,14 +916,6 @@
         s.misses = 0;
         s.status = '¡Rebote perfecto! ' + s.score + (s.score === 1 ? ' punto.' : ' puntos.');
       } else s.status = 'Esperá a que Yeti baje cerca de la lona.';
-    }
-    if (s.id === 'volley' && action === 'hit') {
-      if (Math.hypot(s.ball.x - 180, s.ball.y - 285) < 190 && s.elapsed - s.lastHit > .28) {
-        s.ball.vx = 250 + Math.random() * 80;
-        s.ball.vy = -510;
-        s.score++; s.lastHit = s.elapsed;
-        s.status = '¡Buen toque! Seguí el rally.';
-      } else s.status = 'Esperá a que la pelota esté cerca de Yeti.';
     }
     if (s.id === 'runner' && action === 'jump' && s.player.y >= 359) s.player.vy = -650;
     if (s.id === 'driver' && (action === 'left' || action === 'right')) s.lane = Math.max(0, Math.min(2, s.lane + (action === 'left' ? -1 : 1)));
