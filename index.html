@@ -197,10 +197,10 @@
       --blue-50:  #f0f5ff;
       --gold:     #d4a630;
       --white:    #ffffff;
-      --gray-50:  #f8faff;
-      --gray-100: #edf1f9;
+      --gray-50:  #f0f3f8;
+      --gray-100: #e2e8f0;
       --gray-300: #b0bcd4;
-      --gray-500: #6b7a9c;
+      --gray-500: #53627a;
       --gray-700: #2d3a58;
       --shadow-sm: 0 2px 10px rgba(10,31,68,0.08);
       --shadow:    0 6px 28px rgba(10,31,68,0.13);
@@ -211,7 +211,7 @@
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     body {
       font-family: 'Montserrat', sans-serif;
-      background: var(--gray-50);
+      background: linear-gradient(180deg, #f3f5f9 0%, var(--gray-50) 360px);
       color: var(--gray-700);
       min-height: 100vh;
       overflow-x: hidden;
@@ -317,11 +317,11 @@
     .breadcrumb {
       display: flex; align-items: center; gap: 6px;
       font-size: 0.72rem; font-weight: 600;
-      color: var(--gray-300); list-style: none;
+      color: var(--gray-500); list-style: none;
       flex-wrap: wrap;
     }
     .breadcrumb li + li::before {
-      content: '›'; margin-right: 6px; color: var(--gray-300);
+      content: '›'; margin-right: 6px; color: var(--gray-500);
     }
     .breadcrumb a { color: var(--blue-500); text-decoration: none; }
     .breadcrumb a:hover { text-decoration: underline; }
@@ -339,6 +339,7 @@
     .sidebar {
       position: sticky; top: 24px;
       background: #fff;
+      border: 1px solid #dfe5ee;
       border-radius: var(--radius);
       box-shadow: var(--shadow-sm);
       overflow: hidden; overflow-x: hidden; max-width: 100%;
@@ -434,7 +435,7 @@
       color: var(--blue-800); letter-spacing: 0.02em;
       word-wrap: break-word; word-break: break-word; min-width: 0;
     }
-    .prod-count { font-size: 0.75rem; font-weight: 600; color: var(--gray-300); letter-spacing: 0.06em; white-space: nowrap; }
+    .prod-count { font-size: 0.78rem; font-weight: 600; color: var(--gray-500); letter-spacing: 0.04em; white-space: nowrap; }
 
     .prod-grid {
       display: grid;
@@ -442,7 +443,7 @@
       gap: 20px;
     }
     .prod-card {
-      background: #fff; border-radius: var(--radius);
+      background: #fff; border: 1px solid #dfe5ee; border-radius: var(--radius);
       box-shadow: var(--shadow-sm); overflow: hidden;
       transition: var(--tr); cursor: default;
       display: flex; flex-direction: column; min-height: 0;
@@ -463,7 +464,7 @@
       display: -webkit-box; -webkit-line-clamp: 3; line-clamp: 3; -webkit-box-orient: vertical;
     }
     .prod-caption {
-      font-size: 0.72rem; color: var(--gray-500);
+      font-size: 0.78rem; color: var(--gray-500);
       line-height: 1.4; margin-bottom: 12px;
       font-family: 'Merriweather', serif; font-style: italic; font-weight: 300;
       overflow: hidden; word-wrap: break-word; word-break: break-word;
@@ -484,10 +485,10 @@
     .state-icon svg { width: 42px; height: 42px; fill: var(--blue-700); }
     .state-welcome h2 { font-size: 1.5rem; font-weight: 800; color: var(--blue-800); margin-bottom: 12px; }
     .state-welcome p { font-size: 0.88rem; color: var(--gray-500); max-width: 380px; line-height: 1.65; margin: 0 auto; }
-    .state-empty { text-align: center; padding: 60px 20px; color: var(--gray-300); }
+    .state-empty { text-align: center; padding: 60px 20px; color: var(--gray-500); }
     .state-empty svg { width: 56px; height: 56px; fill: var(--gray-100); margin-bottom: 14px; }
     .state-empty p { font-size: 0.85rem; font-weight: 600; }
-    .loading { display: flex; align-items: center; justify-content: center; gap: 12px; padding: 60px; color: var(--gray-300); font-size: 0.85rem; font-weight: 600; }
+    .loading { display: flex; align-items: center; justify-content: center; gap: 12px; padding: 60px; color: var(--gray-500); font-size: 0.85rem; font-weight: 600; }
     .spinner { width: 22px; height: 22px; border-radius: 50%; border: 2.5px solid var(--gray-100); border-top-color: var(--blue-500); animation: spin 0.75s linear infinite; }
     @keyframes spin { to { transform: rotate(360deg); } }
 
@@ -503,7 +504,7 @@
     }
     .faq-list { display: flex; flex-direction: column; gap: 10px; }
     .faq-item {
-      background: #fff; border-radius: var(--radius);
+      background: #fff; border: 1px solid #dfe5ee; border-radius: var(--radius);
       box-shadow: var(--shadow-sm); overflow: hidden;
     }
     .faq-q {
@@ -544,11 +545,11 @@
       gap: 16px;
     }
     .press-card {
-      background: #fff; border-radius: var(--radius);
+      background: #fff; border: 1px solid #dfe5ee; border-radius: var(--radius);
       box-shadow: var(--shadow-sm); padding: 20px 22px;
       border-left: 3px solid var(--blue-500);
     }
-    .press-card .press-date { font-size: 0.68rem; font-weight: 700; color: var(--gray-300); letter-spacing: 0.12em; text-transform: uppercase; margin-bottom: 6px; }
+    .press-card .press-date { font-size: 0.72rem; font-weight: 700; color: var(--gray-500); letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 6px; }
     .press-card h3 { font-size: 0.9rem; font-weight: 700; color: var(--blue-800); margin-bottom: 6px; line-height: 1.35; }
     .press-card p { font-size: 0.78rem; color: var(--gray-500); line-height: 1.55; }
 
@@ -581,7 +582,7 @@
       .layout { grid-template-columns: 240px 1fr; gap: 20px; }
       .prod-grid { grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); }
       .prod-title { font-size: 0.8rem; }
-      .prod-caption { font-size: 0.7rem; }
+      .prod-caption { font-size: 0.74rem; }
     }
     @media (max-width: 768px) {
       .layout { grid-template-columns: 1fr; }
@@ -592,7 +593,7 @@
       .prod-card img { height: 150px; }
       .prod-info { padding: 12px 10px; }
       .prod-title { font-size: 0.75rem; }
-      .prod-caption { font-size: 0.68rem; }
+      .prod-caption { font-size: 0.72rem; }
       .prod-price { font-size: 0.85rem; padding: 3px 8px; }
       .press-cards { grid-template-columns: 1fr; }
     }
@@ -608,7 +609,7 @@
       .prod-card img { height: 120px; }
       .prod-info { padding: 10px 8px; }
       .prod-title { font-size: 0.7rem; margin-bottom: 4px; }
-      .prod-caption { font-size: 0.65rem; margin-bottom: 8px; }
+      .prod-caption { font-size: 0.68rem; margin-bottom: 8px; }
       .prod-price { font-size: 0.8rem; padding: 2px 6px; }
       .prod-header { padding-bottom: 12px; margin-bottom: 16px; }
       .prod-header h2 { font-size: 1.1rem; }
@@ -677,12 +678,13 @@
       </button>
     </div>
   </div>
+  <div class="lab-hero"><h2>Tolomeo<br>Puertas y Ventanas</h2><p>Aluminio, madera y chapa en Mar del Plata</p></div>
   <div class="header-bar">
     <div class="header-bar-inner">
-      <span class="bar-tag active">Catálogo</span>
-      <span class="bar-tag">Aluminio</span>
-      <span class="bar-tag">Madera</span>
-      <span class="bar-tag">Chapa</span>
+      <button type="button" class="bar-tag active" data-target="catalogo" aria-pressed="true" onclick="navigateCatalog('catalogo')">Catálogo</button>
+      <button type="button" class="bar-tag" data-target="aluminio" aria-pressed="false" onclick="navigateCatalog('aluminio')">Aluminio</button>
+      <button type="button" class="bar-tag" data-target="madera" aria-pressed="false" onclick="navigateCatalog('madera')">Madera</button>
+      <button type="button" class="bar-tag" data-target="chapa" aria-pressed="false" onclick="navigateCatalog('chapa')">Chapa</button>
     </div>
   </div>
 </header>
@@ -760,7 +762,7 @@
 
         <!-- MADERA -->
         <li role="treeitem" aria-expanded="false">
-          <button class="acc-btn" onclick="toggleL1(this)" aria-expanded="false">
+          <button class="acc-btn" id="btn-madera" onclick="toggleL1(this)" aria-expanded="false">
             <span>Aberturas de Madera</span>
             <svg class="chevron" viewBox="0 0 24 24" aria-hidden="true"><path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6z"/></svg>
           </button>
@@ -775,7 +777,7 @@
 
         <!-- CHAPA -->
         <li role="treeitem">
-          <button class="acc-btn leaf-dir" onclick="selectCatBtn(this,'chapa','Aberturas de Chapa')">
+          <button class="acc-btn leaf-dir" id="btn-chapa" onclick="selectCatBtn(this,'chapa','Aberturas de Chapa')">
             <span>Aberturas de Chapa</span>
           </button>
         </li>
@@ -990,6 +992,35 @@ function toggleL1(btn) {
   }
 }
 
+function navigateCatalog(target) {
+  document.querySelectorAll('.bar-tag').forEach(button => {
+    const isActive = button.dataset.target === target;
+    button.classList.toggle('active', isActive);
+    button.setAttribute('aria-pressed', String(isActive));
+  });
+
+  const catalog = document.getElementById('catalogo');
+  if (target === 'catalogo') {
+    catalog.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    return;
+  }
+
+  const categoryButtonId = { aluminio: 'btn-alu', madera: 'btn-madera', chapa: 'btn-chapa' }[target];
+  const categoryButton = categoryButtonId && document.getElementById(categoryButtonId);
+  if (!categoryButton) {
+    console.error(`No se encontró la categoría del catálogo: ${target}`);
+    return;
+  }
+
+  if (target === 'chapa') {
+    selectCatBtn(categoryButton, 'chapa', 'Aberturas de Chapa');
+  } else if (!categoryButton.classList.contains('open')) {
+    toggleL1(categoryButton);
+  }
+
+  catalog.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
 /* — Accordion Level 2 — */
 function toggleL2(btn) {
   const body = btn.nextElementSibling;
@@ -1176,7 +1207,7 @@ async function applySiteConfig() {
       const cfg = cfgDoc.data();
       if (cfg.pageTitle)    document.title = cfg.pageTitle;
       if (cfg.brandTitle) { const h = document.querySelector('.brand-text h1'); if (h) h.textContent = cfg.brandTitle; }
-      if (cfg.bgColor)      document.body.style.background = cfg.bgColor;
+      if (cfg.bgColor)      document.documentElement.style.setProperty('--page-bg-color', cfg.bgColor);
       if (cfg.textColor)    document.body.style.color = cfg.textColor;
       if (cfg.baseFontSize) document.documentElement.style.fontSize = cfg.baseFontSize + 'px';
     }
@@ -1198,5 +1229,8 @@ async function applySiteConfig() {
 
 applySiteConfig();
 </script>
+<link rel="stylesheet" href="tema-lab.css">
+<script src="mascota.js" defer></script>
+<script src="yeti-juegos.js" defer></script>
 </body>
 </html>

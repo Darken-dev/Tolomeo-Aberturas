@@ -358,6 +358,20 @@
       border: none; cursor: pointer; transition: var(--tr);
     }
     .btn-reset:hover { background: var(--gray-300); color: var(--gray-700); }
+    .training-rule {
+      display: flex; justify-content: space-between; align-items: flex-start;
+      gap: 16px; padding: 16px; background: var(--gray-50);
+      border: 1px solid var(--gray-100); border-radius: 10px;
+    }
+    .training-rule + .training-rule { margin-top: 10px; }
+    .training-rule strong { color: var(--blue-800); font-size: .82rem; }
+    .training-rule p { margin-top: 6px; font-size: .82rem; line-height: 1.5; white-space: pre-wrap; overflow-wrap: anywhere; }
+    .training-rule-actions { display: flex; gap: 6px; flex-shrink: 0; }
+    .training-rule-actions .btn-reset { padding: 8px 12px; font-size: .75rem; }
+    @media (max-width: 520px) {
+      .training-rule { flex-direction: column; }
+      .training-rule-actions { width: 100%; }
+    }
 
     /* Feedback toast */
     .toast {
@@ -618,6 +632,11 @@
               <span>Página</span>
             </button>
           </li>
+          <li>
+            <button class="acc-btn leaf-dir" onclick="selectYetiTrainer(this)">
+              <span>¿Entrenar a Yeti?</span>
+            </button>
+          </li>
 
           <!-- ALUMINIO -->
           <li>
@@ -750,10 +769,12 @@ let currentCatId    = null;
 let currentCatName  = null;
 let pendingDeleteId = null;
 let imageBase64     = null;
+let yetiTrainingRules = [];
+let editingYetiRule = null;
 
 // ══════════════════════════════════════════════════════════
-//  WHITELIST — solo estos emails pueden acceder al admin
-//  Agregá los tuyos acá (en minúsculas)
+// Controla qué cuenta ve el panel; la autorización real está en firestore.rules.
+// Mantener esta lista sincronizada con la función isAdmin() de esas reglas.
 // ══════════════════════════════════════════════════════════
 const ADMIN_EMAILS = [
   'majafer2772@gmail.com'   // ← reemplazá con tu email real
@@ -771,8 +792,8 @@ function initFirebase(cfg) {
 
     // ── Observar estado de autenticación ──────────────────
     auth.onAuthStateChanged(user => {
-      if (user && ADMIN_EMAILS.includes(user.email.toLowerCase())) {
-        // Email autorizado — mostrar panel
+      if (user?.email && user.emailVerified && ADMIN_EMAILS.includes(user.email.toLowerCase())) {
+        // Cuenta autorizada — mostrar el panel; Firestore valida cada operación.
         document.getElementById('login-screen').style.display = 'none';
         document.getElementById('admin-panel').style.display  = 'block';
         document.getElementById('admin-greeting').style.display  = 'inline-flex';
@@ -1220,6 +1241,160 @@ function selectPageEditor(btn, id, name) {
   document.querySelectorAll('.acc-btn.leaf-dir').forEach(b => b.classList.remove('sel'));
   btn.classList.add('sel');
   loadPageEditor();
+}
+
+async function selectYetiTrainer(btn) {
+  document.querySelectorAll('.leaf').forEach(l => l.classList.remove('sel'));
+  document.querySelectorAll('.acc-btn.leaf-dir').forEach(b => b.classList.remove('sel'));
+  btn.classList.add('sel');
+  await loadYetiTraining();
+}
+
+async function loadYetiTraining() {
+  const main = document.getElementById('admin-main');
+  main.innerHTML = '<div class="loading"><div class="spinner"></div> Cargando entrenamiento...</div>';
+  try {
+    if (!db) throw new Error('Firebase no está configurado.');
+    const snapshot = await db.collection('siteConfig').doc('yetiTraining').get();
+    const items = snapshot.exists ? snapshot.data()?.items : [];
+    yetiTrainingRules = Array.isArray(items) ? items.filter(rule =>
+      rule && Array.isArray(rule.keywords) && typeof rule.answer === 'string'
+    ).map(rule => ({ keywords: rule.keywords, answer: rule.answer })) : [];
+    editingYetiRule = null;
+    renderYetiTraining();
+  } catch (error) {
+    console.error('Error cargando el entrenamiento del Yeti:', error);
+    main.innerHTML = `
+      <div class="state-empty">
+        <h2>No se pudo cargar el entrenamiento</h2>
+        <p>${escHtml(error.message || 'Revisá tu conexión e intentá nuevamente.')}</p>
+        <button class="btn-reset" onclick="loadYetiTraining()">Reintentar</button>
+      </div>`;
+  }
+}
+
+function renderYetiTraining() {
+  const main = document.getElementById('admin-main');
+  const rulesHtml = yetiTrainingRules.length
+    ? yetiTrainingRules.map((rule, index) => `
+        <div class="training-rule">
+          <div>
+            <strong>${escHtml(rule.keywords.join(', '))}</strong>
+            <p>${escHtml(rule.answer)}</p>
+          </div>
+          <div class="training-rule-actions">
+            <button class="btn-reset" onclick="editYetiRule(${index})">Editar</button>
+            <button class="btn-reset" onclick="deleteYetiRule(${index})">Quitar</button>
+          </div>
+        </div>`).join('')
+    : '<div class="state-empty"><p>Todavía no agregaste respuestas personalizadas.</p></div>';
+
+  main.innerHTML = `
+    <div class="cat-header">
+      <h2>¿Entrenar a Yeti?</h2>
+      <span class="cat-count">${yetiTrainingRules.length} regla${yetiTrainingRules.length === 1 ? '' : 's'}</span>
+    </div>
+    <div class="add-form-card">
+      <div class="form-card-header"><span>Palabras clave y respuesta</span></div>
+      <div class="form-body">
+        <p style="margin-bottom:18px;color:var(--gray-500);font-size:.84rem;line-height:1.6">
+          Escribí palabras o frases separadas por comas. Cuando alguien use una de ellas, Yeti responderá con el texto que definas. Estas respuestas se revisan antes que las respuestas automáticas actuales.
+        </p>
+        <div class="form-row single">
+          <div class="form-field">
+            <label for="yeti-keywords">Palabras clave</label>
+            <textarea id="yeti-keywords" rows="2" maxlength="300" placeholder="Ej: mosquitero, tela mosquitera"></textarea>
+          </div>
+        </div>
+        <div class="form-row single">
+          <div class="form-field">
+            <label for="yeti-answer">Qué debe responder Yeti</label>
+            <textarea id="yeti-answer" rows="3" maxlength="500" placeholder="Escribí una respuesta breve y clara"></textarea>
+          </div>
+        </div>
+        <div class="form-actions">
+          <button class="btn-reset" onclick="cancelYetiRuleEdit()">Limpiar</button>
+          <button class="btn-save" onclick="addYetiRule()">${editingYetiRule === null ? 'Agregar regla' : 'Actualizar regla'}</button>
+        </div>
+      </div>
+    </div>
+    <div class="add-form-card">
+      <div class="form-card-header"><span>Respuestas personalizadas</span></div>
+      <div class="form-body">
+        <div id="yeti-training-list">${rulesHtml}</div>
+        <div class="form-actions">
+          <button class="btn-reset" onclick="loadYetiTraining()">Descartar cambios</button>
+          <button class="btn-save" onclick="saveYetiTraining()">Guardar entrenamiento</button>
+        </div>
+      </div>
+    </div>`;
+  if (editingYetiRule !== null && yetiTrainingRules[editingYetiRule]) {
+    document.getElementById('yeti-keywords').value = yetiTrainingRules[editingYetiRule].keywords.join(', ');
+    document.getElementById('yeti-answer').value = yetiTrainingRules[editingYetiRule].answer;
+  }
+}
+
+function addYetiRule() {
+  const keywords = document.getElementById('yeti-keywords').value
+    .split(/[,\n]/).map(keyword => keyword.trim()).filter(Boolean);
+  const answer = document.getElementById('yeti-answer').value.trim();
+  const uniqueKeywords = [...new Map(keywords.map(keyword => [keyword.toLocaleLowerCase(), keyword])).values()];
+  if (!uniqueKeywords.length || !answer) {
+    showToast('Completá las palabras clave y la respuesta', 'error');
+    return;
+  }
+  if (uniqueKeywords.length > 10 || uniqueKeywords.some(keyword => keyword.length > 60)) {
+    showToast('Usá hasta 10 palabras clave de máximo 60 caracteres cada una', 'error');
+    return;
+  }
+  if (answer.length > 500) {
+    showToast('La respuesta no puede superar los 500 caracteres', 'error');
+    return;
+  }
+  if (editingYetiRule === null && yetiTrainingRules.length >= 30) {
+    showToast('Podés guardar hasta 30 reglas de entrenamiento', 'error');
+    return;
+  }
+  const rule = { keywords: uniqueKeywords, answer };
+  if (editingYetiRule === null) yetiTrainingRules.push(rule);
+  else yetiTrainingRules[editingYetiRule] = rule;
+  editingYetiRule = null;
+  renderYetiTraining();
+  showToast('Regla lista. Guardá el entrenamiento para publicarla.', 'success');
+}
+
+function editYetiRule(index) {
+  editingYetiRule = index;
+  renderYetiTraining();
+  document.getElementById('yeti-keywords').focus();
+}
+
+function deleteYetiRule(index) {
+  yetiTrainingRules.splice(index, 1);
+  editingYetiRule = null;
+  renderYetiTraining();
+}
+
+function cancelYetiRuleEdit() {
+  editingYetiRule = null;
+  renderYetiTraining();
+}
+
+async function saveYetiTraining() {
+  if (!db) {
+    showToast('Firebase no está configurado', 'error');
+    return;
+  }
+  try {
+    await db.collection('siteConfig').doc('yetiTraining').set({
+      items: yetiTrainingRules,
+      updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+    });
+    showToast('Entrenamiento de Yeti guardado ✓', 'success');
+  } catch (error) {
+    console.error('Error guardando el entrenamiento del Yeti:', error);
+    showToast('No se pudo guardar: ' + error.message, 'error');
+  }
 }
 
 function loadPageEditor() {
