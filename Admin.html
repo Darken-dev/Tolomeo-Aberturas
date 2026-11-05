@@ -834,6 +834,11 @@ function togglePass() {
 function togglePass() {}
 
 async function doLogin() {
+  if (window.location.protocol === 'file:') {
+    showLoginError('Google no permite iniciar sesión desde un archivo file://. Abrí una terminal en la carpeta del proyecto, ejecutá: python3 -m http.server 8000 y visitá http://localhost:8000/Admin.html. Si Firebase lo solicita, agregá localhost en Authentication > Settings > Authorized domains.');
+    return;
+  }
+
   const btn = document.getElementById('btn-login');
   document.getElementById('login-error').classList.remove('show');
   btn.disabled    = true;
@@ -845,9 +850,16 @@ async function doLogin() {
     // onAuthStateChanged se encarga del resto
   } catch(e) {
     let msg = 'Error al iniciar sesión con Google.';
+    if (e.code === 'auth/unauthorized-domain') {
+      msg = 'Este dominio no está autorizado en Firebase. Agregalo en Authentication > Settings > Authorized domains.';
+    }
+    if (e.code === 'auth/operation-not-allowed') {
+      msg = 'El acceso con Google está desactivado. Habilitá Google en Firebase > Authentication > Sign-in method.';
+    }
     if (e.code === 'auth/popup-closed-by-user')    msg = 'Cerraste la ventana de Google.';
     if (e.code === 'auth/network-request-failed')  msg = 'Sin conexión a internet.';
     if (e.code === 'auth/popup-blocked')           msg = 'El navegador bloqueó el popup. Permitilo e intentá de nuevo.';
+    console.error('Error al iniciar sesión con Google:', e.code, e.message);
     showLoginError(msg);
   } finally {
     btn.disabled = false;

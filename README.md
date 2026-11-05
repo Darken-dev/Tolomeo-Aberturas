@@ -19,6 +19,14 @@ La lista de administradores en `Admin.html` y el email de `isAdmin()` en
 `firestore.rules` deben mantenerse sincronizados. Cambiar solo el código del
 sitio no actualiza las reglas publicadas en Firebase.
 
+Para probar el panel desde la computadora, no abras `Admin.html` directamente
+como archivo (`file://`), porque Google bloquea ese origen. Desde una terminal
+abierta en la carpeta del proyecto, ejecutá `python3 -m http.server 8000` y
+visitá `http://localhost:8000/Admin.html`. Si Firebase informa que el dominio no
+está autorizado, agregá `localhost` en **Authentication > Settings > Authorized
+domains** y verificá que el proveedor **Google** esté habilitado en
+**Authentication > Sign-in method**.
+
 ## Entrenar al Yeti
 
 Desde el panel `Admin.html`, ingresá con la cuenta administradora y elegí
@@ -35,6 +43,11 @@ artificial ni envía los mensajes de los visitantes.
 ## Minijuegos del Yeti
 
 En el menú de la mascota, **Jugar** abre una ventana independiente con 11
-minijuegos de movimiento, deportes, carreras y lógica. Se cierra con el botón
+minijuegos de movimiento, deportes, carreras y lógica, ambientados con puertas,
+ventanas y portones. En **Penales contra Yeti**, el jugador patea al arco y Yeti
+se desplaza de lado a lado para atajar; cada gol aumenta su velocidad. En
+**Conectá tres**, las fichas se intercambian arrastrándolas en cruz, como en un
+match-3: la ficha sigue el dedo y la vecina se desplaza en sentido contrario,
+con animación al completar o deshacer el movimiento. Se cierra con el botón
 **Cerrar** o Escape; el catálogo conserva su estado. Los juegos se ejecutan en
 el navegador, no usan sensores de movimiento ni transmiten datos.

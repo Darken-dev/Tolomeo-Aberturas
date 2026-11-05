@@ -2,7 +2,7 @@
   if (window.__yetiGamesLoaded) return;
   window.__yetiGamesLoaded = true;
 
-  var CANDIES = ['❄️', '🔵', '🍓', '⭐', '🫐', '💎'];
+  var CANDIES = ['🪟', '🚪', '🚧', '🔑', '⭐', '🏠'];
   var yetiSprite = new Image();
   var yetiSpriteReady = false;
   var mascotSvg = document.querySelector('#tolo svg');
@@ -21,14 +21,14 @@
     { id: 'catch', category: 'Movimiento', title: 'Tirá y atrapá', help: 'Tocá la pelota para lanzársela a Yeti. También podés arrastrarla para apuntar.' },
     { id: 'rope', category: 'Movimiento', title: 'Saltar la cuerda', help: 'Tocá Saltar justo antes de que la cuerda llegue al suelo.' },
     { id: 'trampoline', category: 'Movimiento', title: 'Trampolín', help: 'Tocá Rebotar cuando Yeti esté bajando y cerca de la cama elástica.' },
-    { id: 'football', category: 'Deportes', title: 'Penales contra Yeti', help: 'Tocá el arco para elegir dónde patear; Yeti intentará atajar.' },
+    { id: 'football', category: 'Deportes', title: 'Penales contra Yeti', help: 'La pelota espera abajo en el centro. Tocá un rincón del arco para patear; Yeti se mueve de lado a lado.' },
     { id: 'basket', category: 'Deportes', title: 'Básquet', help: 'Deslizá desde la pelota hacia arriba y a la derecha para encestar.' },
     { id: 'volley', category: 'Deportes', title: 'Vóley de playa', help: 'Yeti inicia el juego. Tocá la pelota cuando llegue a tu lado para devolverla antes de que caiga.' },
     { id: 'runner', category: 'Carreras', title: 'Carrera de obstáculos', help: 'Tocá Saltar o la barra espaciadora para pasar las vallas.' },
     { id: 'driver', category: 'Carreras', title: 'Auto de Yeti', help: 'Cambiá de carril para esquivar baches y juntar estrellas.' },
     { id: 'skate', category: 'Carreras', title: 'Monopatín', help: 'Usá izquierda y derecha para equilibrarte y saltá las rampas.' },
     { id: 'ttt', category: 'Lógica', title: 'Ta-Te-Ti', help: 'Hacé una línea de tres antes que Yeti. Él no te lo va a dejar fácil.' },
-    { id: 'match3', category: 'Lógica', title: 'Conectá tres', help: 'Intercambiá dos fichas vecinas y alineá tres iguales. Tenés 18 movimientos.' }
+    { id: 'match3', category: 'Lógica', title: 'Conectá tres', help: 'Sostené una ficha y arrastrala en cruz a una vecina para alinear tres iguales. Tenés 18 movimientos.' }
   ];
 
   var style = document.createElement('style');
@@ -52,6 +52,8 @@
     .yg-card strong{font-size:.94rem;color:#0c2461}
     .yg-card small{font-size:.76rem;line-height:1.5;color:#53627a}
     .yg-game{display:grid;gap:12px}
+    .yg-product-strip{display:flex;justify-content:center;gap:10px;flex-wrap:wrap;padding:10px;border-radius:14px;background:#e8eefb}
+    .yg-product-chip{display:flex;align-items:center;gap:6px;padding:7px 11px;border:1px solid #d5e0f2;border-radius:10px;background:#fff;color:#0c2461;font-size:.75rem;font-weight:800}
     .yg-canvas-wrap{overflow:hidden;border-radius:16px;background:#dcecff;box-shadow:inset 0 0 0 1px #0c24611c}
     .yg-canvas{display:block;width:100%;height:auto;aspect-ratio:16/9;touch-action:none}
     .yg-status{min-height:24px;color:#0c2461;font-size:.87rem;font-weight:700}
@@ -60,7 +62,8 @@
     .yg-board.ttt{grid-template-columns:repeat(3,min(23vw,100px))}
     .yg-board.match3{grid-template-columns:repeat(7,min(10vw,62px));gap:5px}
     .yg-cell{display:grid;place-items:center;aspect-ratio:1;border:2px solid #dbe5f5;border-radius:13px;background:#fff;color:#0c2461;font-size:clamp(1.5rem,5vw,2.4rem);font-weight:900;cursor:pointer;touch-action:manipulation}
-    .yg-board.match3 .yg-cell{border-radius:11px;font-size:clamp(1.15rem,4vw,2rem);padding:0}
+    .yg-board.match3 .yg-cell{border-radius:11px;font-size:clamp(1.15rem,4vw,2rem);padding:0;touch-action:none;user-select:none;transition:transform 150ms cubic-bezier(.2,.8,.2,1),box-shadow 150ms}
+    .yg-board.match3 .yg-cell.match-dragging{position:relative;z-index:2;box-shadow:0 10px 24px #0c246155}
     .yg-cell.selected{border-color:#2563eb;background:#e8f0ff;transform:scale(.94)}
     .yg-cell:disabled{cursor:default}
     .yg-safe-note{text-align:center;margin:14px 0 0;color:#6b7a9c;font-size:.72rem}
@@ -77,7 +80,7 @@
   overlay.setAttribute('role', 'dialog');
   overlay.setAttribute('aria-modal', 'true');
   overlay.setAttribute('aria-labelledby', 'yg-title');
-  overlay.innerHTML = '<section class="yg-panel"><div class="yg-header"><div><h2 id="yg-title">Juegos del Yeti</h2><p class="yg-subtitle" id="yg-subtitle">Juegos del Yeti en un barrio con puertas, ventanas y portones.</p></div><button class="yg-close" type="button" aria-label="Cerrar juegos">Cerrar ✕</button></div><main id="yg-content"></main><p class="yg-safe-note">Minijuegos locales · No usan sensores, no envían datos y no interfieren con el catálogo.</p></section>';
+  overlay.innerHTML = '<section class="yg-panel"><div class="yg-header"><div><h2 id="yg-title">Juegos del Yeti</h2><p class="yg-subtitle" id="yg-subtitle">Minijuegos inspirados en puertas, ventanas y portones.</p></div><button class="yg-close" type="button" aria-label="Cerrar juegos">Cerrar ✕</button></div><main id="yg-content"></main><p class="yg-safe-note">Minijuegos locales · No usan sensores, no envían datos y no interfieren con el catálogo.</p></section>';
   document.body.appendChild(overlay);
 
   var content = overlay.querySelector('#yg-content');
@@ -154,8 +157,8 @@
     title.textContent = def.title;
     subtitle.textContent = def.help;
     content.innerHTML = '<div class="yg-game">' +
-      (id === 'ttt' ? '<div class="yg-board ttt" id="yg-board"></div>' :
-        id === 'match3' ? '<div class="yg-board match3" id="yg-board"></div>' :
+      (id === 'ttt' ? '<div class="yg-product-strip" aria-label="Productos del juego"><span class="yg-product-chip">🪟 Ventanas</span><span class="yg-product-chip">🚪 Puertas</span><span class="yg-product-chip">🚧 Portones</span></div><div class="yg-board ttt" id="yg-board"></div>' :
+        id === 'match3' ? '<div class="yg-product-strip" aria-label="Fichas del juego"><span class="yg-product-chip">🪟 Ventana</span><span class="yg-product-chip">🚪 Puerta</span><span class="yg-product-chip">🚧 Portón</span></div><div class="yg-board match3" id="yg-board"></div>' :
           '<div class="yg-canvas-wrap"><canvas class="yg-canvas" width="800" height="450" aria-label="' + escapeHtml(def.title) + '"></canvas></div>') +
       '<div class="yg-status" id="yg-status" role="status" aria-live="polite"></div>' +
       '<div class="yg-actions" id="yg-actions"></div>' +
@@ -214,7 +217,7 @@
     if (id === 'catch') Object.assign(state, { ball: { x: 120, y: 334, vx: 0, vy: 0, active: false }, player: { x: 640, y: 370 } });
     if (id === 'rope') Object.assign(state, { ropePeriod: 1.45, jumpUntil: 0, lastCycle: -1, status: '¡Preparado! Esperá el momento y saltá.' });
     if (id === 'trampoline') Object.assign(state, { player: { x: 400, y: 230, vy: 0 }, misses: 0, status: 'Tocá Rebotar cuando esté bajando cerca de la lona.' });
-    if (id === 'football') Object.assign(state, { ball: { x: 60, y: 340, vx: 0, vy: 0, active: false }, player: { y: 225 }, shot: 0, saveAt: 0, status: 'Tocá el arco para patear. Yeti intenta atajar.' });
+    if (id === 'football') Object.assign(state, { ball: { x: 400, y: 410, vx: 0, vy: 0, active: false }, player: { x: 400, direction: 1 }, shot: 0, status: 'La pelota está en el centro. Tocá el arco para patear.' });
     if (id === 'basket') Object.assign(state, { ball: { x: 115, y: 345, vx: 0, vy: 0, active: false }, attempts: 0, status: 'Deslizá la pelota en arco hacia el aro.' });
     if (id === 'volley') Object.assign(state, {
       ball: { x: 585, y: 245, vx: 0, vy: 0, active: false },
@@ -225,7 +228,7 @@
     if (id === 'driver') Object.assign(state, { lane: 1, spawnTimer: .8, status: 'Esquivá los baches y juntá estrellas.' });
     if (id === 'skate') Object.assign(state, { player: { y: 350 }, status: 'Mantené el equilibrio y preparate para las rampas.' });
     if (id === 'ttt') Object.assign(state, { board: Array(9).fill(''), status: 'Tu turno: X.' });
-    if (id === 'match3') Object.assign(state, { board: createMatchBoard(), moves: 18, status: 'Elegí una ficha y luego una vecina.' });
+    if (id === 'match3') Object.assign(state, { board: createMatchBoard(), moves: 18, status: 'Sostené una ficha y arrastrala arriba, abajo o a un costado.' });
     return state;
   }
 
@@ -248,7 +251,7 @@
     if (s.id === 'catch') return 'Atrapadas: ' + s.score + (s.status ? ' · ' + s.status : '');
     if (s.id === 'rope') return 'Saltos: ' + s.score + ' · Errores: ' + s.misses + (s.status ? ' · ' + s.status : '');
     if (s.id === 'trampoline') return 'Rebotes: ' + s.score + ' · ' + s.status;
-    if (s.id === 'football') return 'Goles: ' + s.score + ' · Atajadas de Yeti: ' + s.misses;
+    if (s.id === 'football') return 'Goles: ' + s.score + ' · Atajadas de Yeti: ' + s.misses + (s.status ? ' · ' + s.status : '');
     if (s.id === 'basket') return 'Encestes: ' + s.score + ' · Tiros: ' + s.attempts + ' · ' + s.status;
     if (s.id === 'volley') return 'Toques seguidos: ' + s.score + ' · Vidas: ' + s.lives + ' · ' + s.status;
     if (s.id === 'runner') return s.ended ? 'Fin de carrera · Puntaje: ' + Math.floor(s.score) + ' · Tocá Reiniciar.' : 'Puntaje: ' + Math.floor(s.score);
@@ -330,31 +333,39 @@
     if (scored) s.score++;
     else s.misses++;
     s.shot++;
-    s.ball.x = 60;
-    s.ball.y = 340;
+    s.ball.x = 400;
+    s.ball.y = 410;
     s.ball.vx = 0;
     s.ball.vy = 0;
     s.ball.active = false;
-    s.player.y = 225;
     s.saveAt = 0;
   }
 
   function updateFootball(s, dt) {
     var b = s.ball;
-    if (!b.active) return;
-    b.x += b.vx * dt;
-    b.y += b.vy * dt;
-    var keeperTarget = Math.max(140, Math.min(300, b.y));
-    s.player.y += Math.sign(keeperTarget - s.player.y) * Math.min(Math.abs(keeperTarget - s.player.y), 26 * dt);
-    if (b.x > 548 && b.x < 610 && Math.abs(b.y - s.player.y) < 35) {
-      s.status = '¡Yeti atajó el penal! Buscá otro rincón.';
-      resetShot(s, false);
+    var keeperSpeed = Math.min(420, 115 + s.score * 28);
+    if (b.active) {
+      b.x += b.vx * dt;
+      b.y += b.vy * dt;
+      var keeperDelta = b.x - s.player.x;
+      s.player.x += Math.sign(keeperDelta) * Math.min(Math.abs(keeperDelta), keeperSpeed * dt);
+      if (b.y <= 280) {
+        if (b.x >= 225 && b.x <= 575 && Math.abs(b.x - s.player.x) <= 48) {
+          s.status = '¡Yeti atajó el penal! Apuntá al otro lado.';
+          resetShot(s, false);
+        } else if (b.x >= 220 && b.x <= 580) {
+          s.status = '¡Gol! Yeti va a moverse más rápido en el próximo penal.';
+          resetShot(s, true);
+        } else {
+          s.status = 'La pelota se fue afuera. Probá otra vez.';
+          resetShot(s, false);
+        }
+      }
       return;
     }
-    if (b.x >= 620) {
-      s.status = '¡Gol! Probá apuntar a otro lugar.';
-      resetShot(s, true);
-    }
+    s.player.x += s.player.direction * keeperSpeed * dt;
+    if (s.player.x >= 530) { s.player.x = 530; s.player.direction = -1; }
+    if (s.player.x <= 270) { s.player.x = 270; s.player.direction = 1; }
   }
 
   function updateBasket(s, dt) {
@@ -421,7 +432,8 @@
     if (p.y > 360) { p.y = 360; p.vy = 0; }
     s.spawnTimer -= dt;
     if (s.spawnTimer <= 0) {
-      s.objects.push({ x: 830, w: 42, h: 48 });
+      var obstacleTypes = ['door', 'window', 'gate'];
+      s.objects.push({ x: 830, w: 42, h: 48, type: obstacleTypes[Math.floor(Math.random() * obstacleTypes.length)] });
       s.spawnTimer = Math.max(1.05, 1.7 - s.score / 120);
     }
     s.objects.forEach(function (obstacle) { obstacle.x -= (300 + Math.min(180, s.score * 2)) * dt; });
@@ -500,58 +512,55 @@
 
   function drawCourt() {
     var gradient = ctx.createLinearGradient(0, 0, 0, 450);
-    gradient.addColorStop(0, '#dff1ff');
-    gradient.addColorStop(1, '#f4f8ff');
+    gradient.addColorStop(0, '#d8edff');
+    gradient.addColorStop(1, '#f5f8ff');
     ctx.fillStyle = gradient;
     ctx.fillRect(0, 0, 800, 450);
-    drawAberturas();
   }
 
-  function drawAberturas() {
-    ctx.fillStyle = '#d9e3f2';
-    ctx.fillRect(74, 115, 160, 96);
-    ctx.fillStyle = '#b9c9e2';
-    ctx.fillRect(65, 107, 178, 11);
-    ctx.fillStyle = '#f6f9ff';
-    ctx.fillRect(91, 132, 58, 48);
-    ctx.fillRect(158, 132, 58, 48);
-    ctx.strokeStyle = '#4770a9';
-    ctx.lineWidth = 5;
-    ctx.strokeRect(91, 132, 58, 48);
-    ctx.strokeRect(158, 132, 58, 48);
-    ctx.beginPath(); ctx.moveTo(120, 132); ctx.lineTo(120, 180); ctx.moveTo(91, 156); ctx.lineTo(149, 156);
-    ctx.moveTo(187, 132); ctx.lineTo(187, 180); ctx.moveTo(158, 156); ctx.lineTo(216, 156); ctx.stroke();
+  function drawWindow(x, y, w, h) {
+    ctx.fillStyle = '#a8bdd8';
+    ctx.fillRect(x - 7, y - 7, w + 14, h + 14);
+    ctx.fillStyle = '#9edcf4';
+    ctx.fillRect(x, y, w, h);
+    ctx.fillStyle = '#e7f8ff';
+    ctx.fillRect(x + 5, y + 5, w * .42, h * .38);
+    ctx.strokeStyle = '#315b8e';
+    ctx.lineWidth = Math.max(3, w * .045);
+    ctx.strokeRect(x, y, w, h);
+    ctx.beginPath();
+    ctx.moveTo(x + w / 2, y); ctx.lineTo(x + w / 2, y + h);
+    ctx.moveTo(x, y + h / 2); ctx.lineTo(x + w, y + h / 2);
+    ctx.stroke();
+  }
 
-    ctx.fillStyle = '#e9d8bd';
-    ctx.fillRect(342, 91, 123, 120);
-    ctx.fillStyle = '#b58554';
-    ctx.fillRect(329, 82, 149, 13);
-    ctx.fillStyle = '#895d39';
-    ctx.fillRect(379, 130, 48, 81);
-    ctx.strokeStyle = '#d6ad7d';
-    ctx.lineWidth = 3;
-    ctx.strokeRect(384, 135, 38, 71);
-    ctx.fillStyle = '#f1d27b';
-    ctx.beginPath(); ctx.arc(418, 172, 2.7, 0, Math.PI * 2); ctx.fill();
+  function drawDoor(x, y, w, h) {
+    ctx.fillStyle = '#e8d7ba';
+    ctx.fillRect(x - 9, y - 9, w + 18, h + 9);
+    ctx.fillStyle = '#9a6844';
+    ctx.fillRect(x, y, w, h);
+    ctx.strokeStyle = '#e9c99c';
+    ctx.lineWidth = Math.max(3, w * .05);
+    ctx.strokeRect(x + w * .1, y + h * .08, w * .8, h * .84);
+    ctx.beginPath();
+    ctx.moveTo(x + w * .1, y + h * .52); ctx.lineTo(x + w * .9, y + h * .52);
+    ctx.stroke();
+    ctx.fillStyle = '#f5d477';
+    ctx.beginPath(); ctx.arc(x + w * .78, y + h * .57, Math.max(2, w * .035), 0, Math.PI * 2); ctx.fill();
+  }
 
-    ctx.fillStyle = '#d9e3f2';
-    ctx.fillRect(563, 116, 174, 95);
-    ctx.fillStyle = '#b9c9e2';
-    ctx.fillRect(552, 107, 196, 12);
-    ctx.fillStyle = '#7b91b2';
-    ctx.fillRect(576, 140, 148, 71);
-    ctx.strokeStyle = '#eef4ff';
-    ctx.lineWidth = 3;
-    ctx.strokeRect(576, 140, 148, 71);
-    for (var y = 151; y < 208; y += 14) {
-      ctx.beginPath(); ctx.moveTo(578, y); ctx.lineTo(722, y); ctx.stroke();
+  function drawGate(x, y, w, h) {
+    ctx.fillStyle = '#aabbd0';
+    ctx.fillRect(x - 9, y - 9, w + 18, h + 18);
+    ctx.fillStyle = '#667e9d';
+    ctx.fillRect(x, y, w, h);
+    ctx.strokeStyle = '#e8f0fb';
+    ctx.lineWidth = Math.max(2, h * .055);
+    ctx.strokeRect(x, y, w, h);
+    for (var i = 1; i < 5; i++) {
+      var lineY = y + h * i / 5;
+      ctx.beginPath(); ctx.moveTo(x + 3, lineY); ctx.lineTo(x + w - 3, lineY); ctx.stroke();
     }
-    ctx.fillStyle = '#53627a';
-    ctx.font = '700 11px Montserrat, Arial, sans-serif';
-    ctx.textAlign = 'center';
-    ctx.fillText('VENTANAS', 153, 198);
-    ctx.fillText('PUERTAS', 403, 228);
-    ctx.fillText('PORTONES', 650, 228);
   }
 
   function drawGround(y, color) {
@@ -603,14 +612,20 @@
 
   function drawCatch(s) {
     drawCourt(); drawGround(392, '#83cf87');
+    drawDoor(38, 210, 72, 152);
+    drawWindow(137, 238, 112, 78);
+    drawGate(304, 207, 142, 94);
     ctx.fillStyle = '#ffdf88'; ctx.beginPath(); ctx.arc(650, 220, 105, 0, Math.PI * 2); ctx.fill();
     drawYeti(s.player.x, 364, .8);
     drawBall(s.ball.x, s.ball.y, 16, '#ef8b36');
-    drawText('Arrastrá la pelota para lanzar', 24, 38, 18);
+    drawText('Tocá o arrastrá la pelota para lanzársela a Yeti', 24, 38, 18);
   }
 
   function drawRope(s) {
     drawCourt(); drawGround(392, '#f3d7ab');
+    drawWindow(77, 123, 108, 72);
+    drawDoor(616, 113, 74, 145);
+    drawGate(271, 135, 160, 74);
     var angle = (s.elapsed % s.ropePeriod) / s.ropePeriod * Math.PI * 2;
     var endX = 400 + Math.sin(angle) * 210;
     var endY = 220 - Math.cos(angle) * 180;
@@ -624,6 +639,9 @@
 
   function drawTrampoline(s) {
     drawCourt(); drawGround(400, '#83cf87');
+    drawWindow(76, 158, 118, 82);
+    drawGate(280, 131, 240, 142);
+    drawDoor(615, 145, 75, 145);
     ctx.fillStyle = '#1f56d6'; ctx.beginPath(); ctx.ellipse(400, 396, 130, 17, 0, 0, Math.PI * 2); ctx.fill();
     ctx.strokeStyle = '#0c2461'; ctx.lineWidth = 5; ctx.beginPath(); ctx.moveTo(290, 396); ctx.lineTo(272, 425); ctx.moveTo(510, 396); ctx.lineTo(528, 425); ctx.stroke();
     drawYeti(400, s.player.y, .78);
@@ -632,18 +650,33 @@
 
   function drawFootball(s) {
     drawCourt();
-    ctx.fillStyle = '#64b66d'; ctx.fillRect(0, 310, 800, 140);
-    ctx.strokeStyle = '#fff'; ctx.lineWidth = 4; ctx.strokeRect(615, 115, 150, 210);
-    ctx.strokeStyle = '#ffffff88'; ctx.lineWidth = 2;
-    for (var y = 130; y < 320; y += 20) { ctx.beginPath(); ctx.moveTo(615, y); ctx.lineTo(765, y); ctx.stroke(); }
-    for (var x = 630; x < 765; x += 25) { ctx.beginPath(); ctx.moveTo(x, 115); ctx.lineTo(x, 325); ctx.stroke(); }
-    drawYeti(575, s.player.y + 58, .72);
+    ctx.fillStyle = '#64b66d'; ctx.fillRect(0, 325, 800, 125);
+    drawWindow(38, 158, 78, 68);
+    drawDoor(135, 136, 60, 116);
+    drawGate(214, 162, 46, 68);
+    ctx.fillStyle = '#489653'; ctx.fillRect(220, 72, 360, 248);
+    ctx.fillStyle = '#5cad68'; ctx.fillRect(237, 88, 326, 215);
+    ctx.strokeStyle = '#f2fff1'; ctx.lineWidth = 5;
+    ctx.beginPath();
+    ctx.moveTo(220, 72); ctx.lineTo(238, 91); ctx.lineTo(238, 302); ctx.lineTo(220, 320);
+    ctx.moveTo(580, 72); ctx.lineTo(562, 91); ctx.lineTo(562, 302); ctx.lineTo(580, 320);
+    ctx.moveTo(220, 72); ctx.lineTo(580, 72); ctx.moveTo(220, 320); ctx.lineTo(580, 320);
+    ctx.stroke();
+    ctx.strokeStyle = '#ffffffb0'; ctx.lineWidth = 2;
+    for (var y = 105; y < 310; y += 26) { ctx.beginPath(); ctx.moveTo(239, y); ctx.lineTo(561, y); ctx.stroke(); }
+    for (var x = 260; x < 561; x += 34) { ctx.beginPath(); ctx.moveTo(x, 89); ctx.lineTo(x, 303); ctx.stroke(); }
+    ctx.strokeStyle = '#f2fff1'; ctx.lineWidth = 7;
+    ctx.strokeRect(220, 72, 360, 248);
+    drawYeti(s.player.x, 315, .88);
     drawBall(s.ball.x, s.ball.y, 13, '#fff');
-    drawText('Atajá los tiros de Yeti', 24, 38, 18);
+    drawText('Penal contra Yeti · Tocá el arco para elegir dónde patear', 24, 38, 18);
   }
 
   function drawBasket(s) {
     drawCourt(); drawGround(392, '#e8b779');
+    drawDoor(92, 145, 75, 140);
+    drawGate(234, 162, 150, 88);
+    drawWindow(654, 136, 91, 73);
     ctx.fillStyle = '#deb887'; ctx.fillRect(610, 100, 15, 105);
     ctx.fillStyle = '#fff'; ctx.fillRect(580, 112, 52, 48);
     ctx.strokeStyle = '#f97316'; ctx.lineWidth = 7; ctx.beginPath(); ctx.moveTo(590, 185); ctx.lineTo(645, 185); ctx.stroke();
@@ -656,6 +689,9 @@
 
   function drawVolley(s) {
     drawCourt();
+    drawDoor(52, 161, 67, 132);
+    drawWindow(141, 197, 108, 70);
+    drawGate(578, 155, 168, 107);
     ctx.fillStyle = '#f0d39a'; ctx.fillRect(0, 340, 800, 110);
     ctx.fillStyle = '#e9c476'; ctx.fillRect(0, 330, 800, 12);
     ctx.fillStyle = '#fff'; ctx.fillRect(396, 190, 8, 150);
@@ -673,16 +709,23 @@
 
   function drawRunner(s) {
     drawCourt(); drawGround(380, '#84c878');
+    drawWindow(73, 123, 115, 73);
+    drawDoor(310, 117, 65, 138);
+    drawGate(568, 132, 160, 91);
     drawYeti(160, s.player.y, .72);
     s.objects.forEach(function (obstacle) {
-      ctx.fillStyle = '#b45309'; ctx.fillRect(obstacle.x, 380 - obstacle.h, obstacle.w, obstacle.h);
-      ctx.fillStyle = '#f59e0b'; ctx.fillRect(obstacle.x - 4, 380 - obstacle.h, obstacle.w + 8, 8);
+      if (obstacle.type === 'window') drawWindow(obstacle.x, 380 - obstacle.h, obstacle.w, obstacle.h);
+      else if (obstacle.type === 'gate') drawGate(obstacle.x, 380 - obstacle.h, obstacle.w, obstacle.h);
+      else drawDoor(obstacle.x, 380 - obstacle.h, obstacle.w, obstacle.h);
     });
     drawText('¡Yeti va a toda velocidad!', 24, 38, 18);
   }
 
   function drawDriver(s) {
     drawCourt(); drawGround(150, '#5c657b');
+    drawWindow(42, 42, 106, 73);
+    drawDoor(189, 24, 57, 118);
+    drawGate(568, 45, 170, 82);
     ctx.fillStyle = '#4c566d'; ctx.fillRect(0, 158, 800, 292);
     ctx.strokeStyle = '#fff'; ctx.lineWidth = 5; ctx.setLineDash([26, 22]);
     ctx.beginPath(); ctx.moveTo(0, 255); ctx.lineTo(800, 255); ctx.moveTo(0, 350); ctx.lineTo(800, 350); ctx.stroke(); ctx.setLineDash([]);
@@ -703,6 +746,9 @@
 
   function drawSkate(s) {
     drawCourt(); drawGround(380, '#b8c6dc');
+    drawWindow(67, 127, 105, 68);
+    drawGate(288, 138, 187, 94);
+    drawDoor(629, 113, 68, 139);
     ctx.fillStyle = '#7b8fae'; ctx.beginPath(); ctx.moveTo(s.nextRamp, 380); ctx.lineTo(s.nextRamp + 55, 330); ctx.lineTo(s.nextRamp + 110, 380); ctx.fill();
     ctx.save(); ctx.translate(200, 348); ctx.rotate(s.lean * .45);
     ctx.fillStyle = '#f97316'; ctx.fillRect(-45, 24, 90, 8);
@@ -743,11 +789,16 @@
     var start = s.pointerDown;
     s.pointerDown = null;
     if (s.id === 'football' && !s.ball.active) {
-      var targetY = Math.max(125, Math.min(315, end.y));
-      s.ball.vx = 520;
-      s.ball.vy = (targetY - s.ball.y) / ((600 - s.ball.x) / s.ball.vx);
-      s.ball.active = true;
-      s.status = '¡Va el remate!';
+      if (end.x >= 220 && end.x <= 580 && end.y >= 72 && end.y <= 320) {
+        var targetX = Math.max(230, Math.min(570, end.x));
+        var targetY = Math.max(100, Math.min(275, end.y));
+        var shotSpeed = 500 + Math.min(180, s.score * 12);
+        var flightTime = (s.ball.y - targetY) / shotSpeed;
+        s.ball.vx = (targetX - s.ball.x) / flightTime;
+        s.ball.vy = -shotSpeed;
+        s.ball.active = true;
+        s.status = '¡Va el remate! Yeti se mueve para atajar.';
+      } else s.status = 'Tocá el arco centrado para patear.';
     } else if (s.id === 'catch' && start && !s.ball.active) {
       var dx = start.x - end.x;
       var dy = end.y - start.y;
@@ -871,7 +922,128 @@
         }).join('');
       }).join('');
       actions.innerHTML = '<button class="yg-game-button primary" type="button" data-reset>Nueva partida</button>';
+      var dragStart = null;
+      board.onpointerdown = function (event) {
+        var cell = event.target.closest('[data-cell]');
+        if (!cell || s.busy || s.ended || event.button > 0) return;
+        event.preventDefault();
+        if (s.selected !== null) s.selected = null;
+        var index = Number(cell.dataset.cell);
+        cell.classList.remove('selected');
+        cell.classList.add('match-dragging');
+        dragStart = {
+          pointerId: event.pointerId,
+          index: index,
+          x: event.clientX,
+          y: event.clientY,
+          cell: cell,
+          neighbor: null,
+          axis: null,
+          sign: 0,
+          step: 0,
+          moved: false
+        };
+        cell.setPointerCapture(event.pointerId);
+      };
+      board.onpointermove = function (event) {
+        if (!dragStart || event.pointerId !== dragStart.pointerId) return;
+        var dx = event.clientX - dragStart.x;
+        var dy = event.clientY - dragStart.y;
+        if (!dragStart.axis && Math.max(Math.abs(dx), Math.abs(dy)) < 4) return;
+        dragStart.axis = Math.abs(dx) >= Math.abs(dy) ? 'x' : 'y';
+        var delta = dragStart.axis === 'x' ? dx : dy;
+        var col = dragStart.index % 7;
+        var row = Math.floor(dragStart.index / 7);
+        var sign = delta < 0 ? -1 : 1;
+        var nextCol = col + (dragStart.axis === 'x' ? sign : 0);
+        var nextRow = row + (dragStart.axis === 'y' ? sign : 0);
+        var neighborIndex = nextRow * 7 + nextCol;
+        if (nextCol < 0 || nextCol >= 7 || nextRow < 0 || nextRow >= 7) {
+          dragStart.cell.style.transform = 'translate(0, 0)';
+          if (dragStart.neighbor) dragStart.neighbor.style.transform = 'translate(0, 0)';
+          dragStart.neighbor = null;
+          dragStart.moved = false;
+          return;
+        }
+        var neighbor = board.querySelector('[data-cell="' + neighborIndex + '"]');
+        var cellRect = dragStart.cell.getBoundingClientRect();
+        var gap = parseFloat(getComputedStyle(board).columnGap) || 0;
+        var step = (dragStart.axis === 'x' ? cellRect.width : cellRect.height) + gap;
+        if (dragStart.neighbor !== neighbor) {
+          if (dragStart.neighbor) dragStart.neighbor.style.transform = 'translate(0, 0)';
+          dragStart.neighbor = neighbor;
+        }
+        dragStart.sign = sign;
+        dragStart.step = step;
+        dragStart.moved = true;
+        var distance = Math.min(Math.abs(delta), step);
+        var offset = sign * distance;
+        var transform = dragStart.axis === 'x'
+          ? 'translate(' + offset + 'px, 0)'
+          : 'translate(0, ' + offset + 'px)';
+        var opposite = dragStart.axis === 'x'
+          ? 'translate(' + -offset + 'px, 0)'
+          : 'translate(0, ' + -offset + 'px)';
+        dragStart.cell.style.transform = transform;
+        neighbor.style.transform = opposite;
+      };
+      board.onpointerup = function (event) {
+        if (!dragStart || event.pointerId !== dragStart.pointerId) return;
+        var start = dragStart;
+        dragStart = null;
+        var dx = event.clientX - start.x;
+        var dy = event.clientY - start.y;
+        var delta = start.axis === 'x' ? dx : dy;
+        var destination = start.index + (start.axis === 'x' ? start.sign : start.sign * 7);
+        var threshold = start.step * .3;
+        start.cell.classList.remove('match-dragging');
+        if (!start.moved || Math.abs(delta) < threshold || !start.neighbor) {
+          animateMatchReset(start);
+          return;
+        }
+        s.suppressMatchClick = true;
+        window.setTimeout(function () { s.suppressMatchClick = false; }, 250);
+        var valid = isValidMatchSwap(s, start.index, destination);
+        var signedStep = start.sign * start.step;
+        var swapTransform = start.axis === 'x'
+          ? 'translate(' + signedStep + 'px, 0)'
+          : 'translate(0, ' + signedStep + 'px)';
+        var reverseTransform = start.axis === 'x'
+          ? 'translate(' + -signedStep + 'px, 0)'
+          : 'translate(0, ' + -signedStep + 'px)';
+        start.cell.style.transform = swapTransform;
+        start.neighbor.style.transform = reverseTransform;
+        window.setTimeout(function () {
+          if (activeGame !== s) return;
+          if (valid) {
+            swapMatchCells(s, start.index, destination);
+          } else {
+            start.cell.style.transform = 'translate(0, 0)';
+            start.neighbor.style.transform = 'translate(0, 0)';
+            window.setTimeout(function () {
+              if (activeGame !== s) return;
+              start.cell.style.transform = '';
+              start.neighbor.style.transform = '';
+              s.status = 'Ese intercambio no forma una línea de tres.';
+              var status = content.querySelector('#yg-status');
+              if (status) status.textContent = s.status;
+            }, 170);
+          }
+        }, 170);
+      };
+      board.onpointercancel = function () {
+        if (!dragStart) return;
+        var start = dragStart;
+        dragStart = null;
+        start.cell.classList.remove('match-dragging');
+        animateMatchReset(start);
+      };
       board.onclick = function (event) {
+        if (s.suppressMatchClick) {
+          s.suppressMatchClick = false;
+          event.preventDefault();
+          return;
+        }
         var cell = event.target.closest('[data-cell]');
         if (cell && !s.busy && !s.ended) playMatchCell(Number(cell.dataset.cell));
       };
@@ -1005,6 +1177,43 @@
     return matches;
   }
 
+  function animateMatchReset(start, onComplete) {
+    start.cell.style.transform = 'translate(0, 0)';
+    if (start.neighbor) start.neighbor.style.transform = 'translate(0, 0)';
+    window.setTimeout(function () {
+      start.cell.style.transform = '';
+      if (start.neighbor) start.neighbor.style.transform = '';
+      if (onComplete) onComplete();
+    }, 170);
+  }
+
+  function swapMatchValues(s, first, second) {
+    var x1 = first % 7, y1 = Math.floor(first / 7);
+    var x2 = second % 7, y2 = Math.floor(second / 7);
+    var candy = s.board[y1][x1];
+    s.board[y1][x1] = s.board[y2][x2];
+    s.board[y2][x2] = candy;
+  }
+
+  function isValidMatchSwap(s, first, second) {
+    swapMatchValues(s, first, second);
+    var valid = findMatches(s.board).size > 0;
+    swapMatchValues(s, first, second);
+    return valid;
+  }
+
+  function swapMatchCells(s, first, second) {
+    swapMatchValues(s, first, second);
+    if (!findMatches(s.board).size) {
+      swapMatchValues(s, first, second);
+      s.status = 'Ese intercambio no forma una línea de tres.';
+      renderBoard();
+      return;
+    }
+    s.moves--;
+    resolveMatches(s, 0);
+  }
+
   function playMatchCell(index) {
     var s = activeGame;
     if (s.selected === null) { s.selected = index; renderBoard(); return; }
@@ -1016,20 +1225,7 @@
     if (Math.abs(x1 - x2) + Math.abs(y1 - y2) !== 1) {
       s.selected = index; renderBoard(); return;
     }
-    var firstCandy = s.board[y1][x1];
-    s.board[y1][x1] = s.board[y2][x2];
-    s.board[y2][x2] = firstCandy;
-    var matches = findMatches(s.board);
-    if (!matches.size) {
-      var swappedCandy = s.board[y1][x1];
-      s.board[y1][x1] = s.board[y2][x2];
-      s.board[y2][x2] = swappedCandy;
-      s.status = 'Ese intercambio no forma una línea de tres.';
-      renderBoard();
-      return;
-    }
-    s.moves--;
-    resolveMatches(s, 0);
+    swapMatchCells(s, first, index);
   }
 
   function resolveMatches(s, depth) {
